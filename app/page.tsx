@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { OUTLOOK_ICONS, OUTLOOKS } from "./outlooks";
 import { OUTLOOKS_AR } from "./outlooks-ar";
 
-type RegionId = "gulf" | "sudan" | "classical";
+type RegionId = "gulf" | "sudan" | "australia" | "classical";
 type Language = "en" | "ar";
 type LocationSource =
   | { kind: "default" }
@@ -55,6 +55,13 @@ type MansionRow = {
 
 const DAY_MS = 86_400_000;
 const MANSION_LENGTHS = Array.from({ length: 28 }, (_, index) => (index === 9 ? 14 : 13));
+const GULF_ANCHOR_ISO = "2026-05-12";
+const SOUTHERN_HEMISPHERE_SHIFT_DAYS = MANSION_LENGTHS
+  .slice(0, 14)
+  .reduce((sum, days) => sum + days, 0);
+const AUSTRALIA_ANCHOR_ISO = new Date(
+  Date.parse(`${GULF_ANCHOR_ISO}T00:00:00Z`) + SOUTHERN_HEMISPHERE_SHIFT_DAYS * DAY_MS,
+).toISOString().slice(0, 10);
 
 function mansionSet(names: Array<[string, string, string?, string?]>): Mansion[] {
   return names.map(([en, ar, localNote, localNoteAr], index) => ({
@@ -141,6 +148,16 @@ const CLASSICAL_MANSIONS = mansionSet([
   ["Al-Fargh Al-Mu'akhkhar", "الفرغ المؤخر"], ["Al-Risha'", "الرشاء"],
 ]);
 
+const AUSTRALIA_MANSIONS: Mansion[] = CLASSICAL_MANSIONS.map((mansion, index) => ({
+  ...mansion,
+  localNote: index === 9
+    ? "Southern Hemisphere seasonal alignment · 14 days"
+    : "Southern Hemisphere seasonal alignment",
+  localNoteAr: index === 9
+    ? "محاذاة موسمية لنصف الكرة الجنوبي · 14 يومًا"
+    : "محاذاة موسمية لنصف الكرة الجنوبي",
+}));
+
 const REGION_PROFILES: Record<RegionId, RegionProfile> = {
   gulf: {
     id: "gulf",
@@ -148,7 +165,7 @@ const REGION_PROFILES: Record<RegionId, RegionProfile> = {
     labelAr: "الخليج العربي",
     shortLabel: "Gulf",
     shortLabelAr: "الخليج",
-    anchorIso: "2026-05-12",
+    anchorIso: GULF_ANCHOR_ISO,
     timeZone: "Asia/Dubai",
     description: "UAE and Arabian Gulf seasonal mansion names and alignment.",
     descriptionAr: "أسماء المنازل الموسمية ومحاذاتها في الإمارات والخليج العربي.",
@@ -165,6 +182,18 @@ const REGION_PROFILES: Record<RegionId, RegionProfile> = {
     description: "Sudanese ainat names with the regional seasonal alignment.",
     descriptionAr: "أسماء العِينات السودانية مع المحاذاة الموسمية الإقليمية.",
     mansions: SUDAN_MANSIONS,
+  },
+  australia: {
+    id: "australia",
+    label: "Australia · Southern Hemisphere",
+    labelAr: "أستراليا · نصف الكرة الجنوبي",
+    shortLabel: "Australia",
+    shortLabelAr: "أستراليا",
+    anchorIso: AUSTRALIA_ANCHOR_ISO,
+    timeZone: "Australia/Sydney",
+    description: "A 13-day Southern Hemisphere seasonal alignment, shifted by 14 mansion boundaries (183 days) from the Arabian Gulf reference.",
+    descriptionAr: "محاذاة موسمية لنصف الكرة الجنوبي من 13 يومًا، مزاحة 14 منزلة (183 يومًا) عن مرجع الخليج العربي.",
+    mansions: AUSTRALIA_MANSIONS,
   },
   classical: {
     id: "classical",
@@ -365,12 +394,20 @@ function todayIsoForTimeZone(timeZone: string) {
 function regionFromTimeZone(timeZone: string): RegionId {
   if (/Khartoum|Juba/i.test(timeZone)) return "sudan";
   if (/Dubai|Muscat|Riyadh|Bahrain|Qatar|Kuwait|Aden/i.test(timeZone)) return "gulf";
+  if (/^Australia\//i.test(timeZone) || /^(Pacific\/Norfolk|Indian\/(Christmas|Cocos)|Antarctica\/Macquarie)$/i.test(timeZone)) {
+    return "australia";
+  }
   return "classical";
 }
 
 function regionFromCoordinates(latitude: number, longitude: number): RegionId {
   if (latitude >= 4 && latitude <= 23.5 && longitude >= 21 && longitude <= 39.5) return "sudan";
   if (latitude >= 12 && latitude <= 34 && longitude >= 34 && longitude <= 60) return "gulf";
+  if (
+    (latitude >= -44.5 && latitude <= -9 && longitude >= 112 && longitude <= 154.5) ||
+    (latitude >= -30.5 && latitude <= -28.5 && longitude >= 167 && longitude <= 169) ||
+    (latitude >= -13 && latitude <= -10 && longitude >= 95 && longitude <= 106)
+  ) return "australia";
   return "classical";
 }
 
@@ -649,10 +686,14 @@ export default function Home() {
       ({ coords }) => {
         const nextRegion = regionFromCoordinates(coords.latitude, coords.longitude);
         const nextProfile = REGION_PROFILES[nextRegion];
+        const detectedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || nextProfile.timeZone;
+        const activeTimeZone = regionFromTimeZone(detectedTimeZone) === nextRegion
+          ? detectedTimeZone
+          : nextProfile.timeZone;
         applyRegion(
           nextRegion,
           { kind: "coordinates", value: `${coords.latitude.toFixed(2)}°, ${coords.longitude.toFixed(2)}°` },
-          nextProfile.timeZone,
+          activeTimeZone,
         );
         setLocating(false);
       },
