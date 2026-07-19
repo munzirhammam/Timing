@@ -3,6 +3,16 @@
 An interactive bilingual regional lunar-mansion calendar with a 365-day cycle,
 regional alignments, seasonal outlooks, and offline support.
 
+## Australia alignment
+
+The Australia profile preserves the complete mansion sequence: 27 mansions at
+13 days and Al-Jabha at 14 days, totalling 365 days. Its seasonal phase is moved
+14 mansion boundaries (183 days) from the Arabian Gulf reference, placing
+Al-Sharatain day 1 on 11 November 2026. This is an explicit Southern Hemisphere
+seasonal adaptation, not a claim of a historical Australian Arabic mansion
+tradition. Automatic detection uses the device's Australian IANA time zone for
+the local date boundary.
+
 - Live on GitHub Pages: <https://munzirhammam.github.io/Timing/>
 - Source repository: <https://github.com/munzirhammam/Timing>
 
