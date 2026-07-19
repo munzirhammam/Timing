@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "types": ["vite/client"]
+  },
+  "include": [
+    "github-pages/**/*.tsx",
+    "app/page.tsx",
+    "app/outlooks.ts",
+    "app/outlooks-ar.ts"
+  ],
+  "exclude": ["node_modules", "dist", "dist-pages"]
+}

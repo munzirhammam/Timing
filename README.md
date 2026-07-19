@@ -1,4 +1,18 @@
-# vinext-starter
+# Lunar Mansion Calendar
+
+An interactive bilingual regional lunar-mansion calendar with a 365-day cycle,
+regional alignments, seasonal outlooks, and offline support.
+
+- Live on GitHub Pages: <https://munzirhammam.github.io/Timing/>
+- Source repository: <https://github.com/munzirhammam/Timing>
+
+## GitHub Pages
+
+Run `npm run build:pages` to produce the static client-side version in
+`dist-pages/`. The published output is stored on the `gh-pages` branch and can
+be selected under **Settings → Pages → Deploy from a branch**.
+
+## Sites hosting
 
 A clean full-stack starter running on
 [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
