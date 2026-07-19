@@ -505,7 +505,11 @@ export default function Home() {
     window.addEventListener("offline", updateConnection);
 
     if ("serviceWorker" in navigator && window.isSecureContext) {
-      navigator.serviceWorker.register("/sw.js")
+      const appBaseUrl = new URL(".", document.baseURI);
+
+      navigator.serviceWorker.register(new URL("sw.js", appBaseUrl).href, {
+        scope: appBaseUrl.pathname,
+      })
         .then(() => navigator.serviceWorker.ready)
         .then((registration) => {
           if (cancelled) return;
@@ -526,7 +530,13 @@ export default function Home() {
           registration.active?.postMessage(
             {
               type: "CACHE_URLS",
-              urls: [window.location.href, "/", "/manifest.webmanifest", "/favicon.svg", ...assetUrls],
+              urls: [
+                window.location.href,
+                appBaseUrl.href,
+                new URL("manifest.webmanifest", appBaseUrl).href,
+                new URL("favicon.svg", appBaseUrl).href,
+                ...assetUrls,
+              ],
             },
             [channel.port2],
           );

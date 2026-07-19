@@ -1,10 +1,12 @@
 const CACHE_NAME = "lunar-mansion-calendar-v5";
+const BASE_URL = new URL("./", self.location.href).href;
+const appUrl = (path = "") => new URL(path, BASE_URL).href;
 const APP_SHELL = [
-  "/",
-  "/manifest.webmanifest",
-  "/favicon.svg",
-  "/icon-192.png",
-  "/icon-512.png",
+  appUrl(),
+  appUrl("manifest.webmanifest"),
+  appUrl("favicon.svg"),
+  appUrl("icon-192.png"),
+  appUrl("icon-512.png"),
 ];
 
 self.addEventListener("install", (event) => {
@@ -61,10 +63,10 @@ self.addEventListener("fetch", (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put("/", copy));
+          caches.open(CACHE_NAME).then((cache) => cache.put(BASE_URL, copy));
           return response;
         })
-        .catch(async () => (await caches.match(request)) || (await caches.match("/"))),
+        .catch(async () => (await caches.match(request)) || (await caches.match(BASE_URL))),
     );
     return;
   }
