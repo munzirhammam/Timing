@@ -1,11 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+type RegionId = "gulf" | "sudan" | "classical";
 
 type Mansion = {
   en: string;
   ar: string;
   days: number;
+  localNote?: string;
+};
+
+type RegionProfile = {
+  id: RegionId;
+  label: string;
+  shortLabel: string;
+  anchorIso: string;
+  timeZone: string;
+  description: string;
+  mansions: Mansion[];
 };
 
 type MansionDate = {
@@ -27,42 +40,121 @@ type MansionRow = {
 };
 
 const DAY_MS = 86_400_000;
-const DEFAULT_ANCHOR = "2026-04-05";
+const MANSION_LENGTHS = Array.from({ length: 28 }, (_, index) => (index === 9 ? 14 : 13));
 
-const MANSIONS: Mansion[] = [
-  { en: "Al-Sharatain", ar: "الشرطان", days: 13 },
-  { en: "Al-Butain", ar: "البطين", days: 13 },
-  { en: "Al-Thurayya", ar: "الثريا", days: 13 },
-  { en: "Al-Dabaran", ar: "الدبران", days: 13 },
-  { en: "Al-Haq'ah", ar: "الهقعة", days: 13 },
-  { en: "Al-Han'ah", ar: "الهنعة", days: 13 },
-  { en: "Al-Dhira'", ar: "الذراع", days: 13 },
-  { en: "Al-Nathrah", ar: "النثرة", days: 13 },
-  { en: "Al-Tarf", ar: "الطرف", days: 13 },
-  { en: "Al-Jabha", ar: "الجبهة", days: 14 },
-  { en: "Al-Zubrah", ar: "الزبرة", days: 13 },
-  { en: "Al-Sarfah", ar: "الصرفة", days: 13 },
-  { en: "Al-Awwa", ar: "العواء", days: 13 },
-  { en: "Al-Simak", ar: "السماك", days: 13 },
-  { en: "Al-Ghafr", ar: "الغفر", days: 13 },
-  { en: "Al-Zubana", ar: "الزبانا", days: 13 },
-  { en: "Al-Iklil", ar: "الإكليل", days: 13 },
-  { en: "Al-Qalb", ar: "القلب", days: 13 },
-  { en: "Al-Shaula", ar: "الشولة", days: 13 },
-  { en: "Al-Na'a'im", ar: "النعائم", days: 13 },
-  { en: "Al-Baldah", ar: "البلدة", days: 13 },
-  { en: "Sa'd Al-Dhabih", ar: "سعد الذابح", days: 13 },
-  { en: "Sa'd Bula'", ar: "سعد بلع", days: 13 },
-  { en: "Sa'd Al-Su'ud", ar: "سعد السعود", days: 13 },
-  { en: "Sa'd Al-Akhbiyah", ar: "سعد الأخبية", days: 13 },
-  { en: "Al-Fargh Al-Muqaddam", ar: "الفرغ المقدم", days: 13 },
-  { en: "Al-Fargh Al-Mu'akhkhar", ar: "الفرغ المؤخر", days: 13 },
-  { en: "Batn Al-Hut", ar: "بطن الحوت", days: 13 },
-];
+function mansionSet(names: Array<[string, string, string?]>): Mansion[] {
+  return names.map(([en, ar, localNote], index) => ({
+    en,
+    ar,
+    localNote,
+    days: MANSION_LENGTHS[index],
+  }));
+}
 
-const MANSION_OFFSETS = MANSIONS.map((_, mansionIndex) =>
-  MANSIONS.slice(0, mansionIndex).reduce((sum, mansion) => sum + mansion.days, 0),
-);
+const GULF_MANSIONS = mansionSet([
+  ["Al-Sharatain", "الشرطان", "Al-Thurayya season"],
+  ["Al-Butain", "البطين", "Al-Thurayya season"],
+  ["Al-Thurayya", "الثريا", "Al-Thurayya season"],
+  ["Al-Dabaran", "الدبران", "Al-Tuwaibi'"],
+  ["Al-Haq'ah", "الهقعة", "Al-Jawza'"],
+  ["Al-Han'ah", "الهنعة", "Al-Jawza'"],
+  ["Al-Dhira'", "الذراع", "Al-Mirzam"],
+  ["Al-Nathrah", "النثرة", "Al-Kulaibain"],
+  ["Al-Tarfah", "الطرفة", "Suhail"],
+  ["Al-Jabha", "الجبهة", "Suhail · 14 days"],
+  ["Al-Zubrah", "الزبرة", "Suhail"],
+  ["Al-Sarfah", "الصرفة", "Suhail"],
+  ["Al-Awwa", "العواء", "Al-Wasm"],
+  ["Al-Simak", "السماك", "Al-Wasm"],
+  ["Al-Ghafr", "الغفر", "Al-Wasm"],
+  ["Al-Zabana", "الزبانا", "Al-Wasm"],
+  ["Al-Iklil", "الإكليل", "Al-Murabba'aniyah"],
+  ["Al-Qalb", "القلب", "Al-Murabba'aniyah"],
+  ["Al-Shaula", "الشولة", "Al-Murabba'aniyah"],
+  ["Al-Na'ayim", "النعايم", "Al-Shabat"],
+  ["Al-Baldah", "البلدة", "Al-Shabat"],
+  ["Sa'd Al-Dhabih", "سعد الذابح", "Al-Aqarib"],
+  ["Sa'd Bula'", "سعد بلع", "Al-Aqarib"],
+  ["Sa'd Al-Su'ud", "سعد السعود", "Al-Aqarib"],
+  ["Sa'd Al-Akhbiyah", "سعد الأخبية", "Al-Hamimain"],
+  ["Al-Muqaddam", "المقدم", "Al-Hamimain"],
+  ["Al-Mu'akhkhar", "المؤخر", "Al-Dhira'ain"],
+  ["Al-Risha'", "الرشاء", "Al-Dhira'ain"],
+]);
+
+const SUDAN_MANSIONS = mansionSet([
+  ["Al-Nath", "النطح", "Sudanese name for Al-Sharatain"],
+  ["Al-Butain", "البطين"],
+  ["Al-Turayya", "التريا", "Sudanese pronunciation"],
+  ["Al-Dabaran", "الدبران"],
+  ["Al-Haka'ah", "الهكعة", "Also Al-'Asa Al-'Atshana"],
+  ["Al-Han'ah", "الهنعة", "Also Al-'Asa Al-Rayyana"],
+  ["Al-Dhira'", "الذراع"],
+  ["Al-Natrah", "النترة", "Regional spelling"],
+  ["Al-Tarf", "الطرف"],
+  ["Al-Jabha", "الجبهة", "14 days"],
+  ["Al-Khirsan", "الخرسان", "Regional name"],
+  ["Al-Sarfah", "الصرفة"],
+  ["Al-Awa", "العوا", "Regional spelling"],
+  ["Al-Simak", "السماك"],
+  ["Al-Ghafr", "الغفر"],
+  ["Al-Zabnan", "الزبنان", "Regional name"],
+  ["Al-Iklil", "الإكليل"],
+  ["Al-Qalb", "القلب"],
+  ["Al-Shaula", "الشولة"],
+  ["Al-Na'ayim", "النعايم"],
+  ["Al-Baldah", "البلدة"],
+  ["Sa'd Dhabih", "سعد ذابح"],
+  ["Sa'd Bala'", "سعد بلع"],
+  ["Sa'd Al-Su'ud", "سعد السعود"],
+  ["Sa'd Al-Akhbiya'", "سعد الأخبياء"],
+  ["Al-Farq Al-Muqaddam", "الفرق المقدم"],
+  ["Al-Farq Al-Mu'akhkhar", "الفرق المؤخر"],
+  ["Al-Hut", "الحوت", "Regional name"],
+]);
+
+const CLASSICAL_MANSIONS = mansionSet([
+  ["Al-Sharatain", "الشرطان"], ["Al-Butain", "البطين"], ["Al-Thurayya", "الثريا"],
+  ["Al-Dabaran", "الدبران"], ["Al-Haq'ah", "الهقعة"], ["Al-Han'ah", "الهنعة"],
+  ["Al-Dhira'", "الذراع"], ["Al-Nathrah", "النثرة"], ["Al-Tarf", "الطرف"],
+  ["Al-Jabha", "الجبهة", "14 days"], ["Al-Zubrah", "الزبرة"], ["Al-Sarfah", "الصرفة"],
+  ["Al-Awwa", "العواء"], ["Al-Simak", "السماك الأعزل"], ["Al-Ghafr", "الغفر"],
+  ["Al-Zubana", "الزباني"], ["Al-Iklil", "الإكليل"], ["Al-Qalb", "القلب"],
+  ["Al-Shaula", "الشولة"], ["Al-Na'a'im", "النعائم"], ["Al-Baldah", "البلدة"],
+  ["Sa'd Al-Dhabih", "سعد الذابح"], ["Sa'd Bula'", "سعد بلع"], ["Sa'd Al-Su'ud", "سعد السعود"],
+  ["Sa'd Al-Akhbiyah", "سعد الأخبية"], ["Al-Fargh Al-Muqaddam", "الفرغ المقدم"],
+  ["Al-Fargh Al-Mu'akhkhar", "الفرغ المؤخر"], ["Al-Risha'", "الرشاء"],
+]);
+
+const REGION_PROFILES: Record<RegionId, RegionProfile> = {
+  gulf: {
+    id: "gulf",
+    label: "Arabian Gulf",
+    shortLabel: "Gulf",
+    anchorIso: "2026-05-12",
+    timeZone: "Asia/Dubai",
+    description: "UAE and Arabian Gulf seasonal mansion names and alignment.",
+    mansions: GULF_MANSIONS,
+  },
+  sudan: {
+    id: "sudan",
+    label: "Sudan & Upper Nile",
+    shortLabel: "Sudan",
+    anchorIso: "2026-04-20",
+    timeZone: "Africa/Khartoum",
+    description: "Sudanese ainat names with the regional seasonal alignment.",
+    mansions: SUDAN_MANSIONS,
+  },
+  classical: {
+    id: "classical",
+    label: "Classical Arabic",
+    shortLabel: "Classical",
+    anchorIso: "2026-04-05",
+    timeZone: "UTC",
+    description: "Classical Arabic names and a neutral reference alignment.",
+    mansions: CLASSICAL_MANSIONS,
+  },
+};
 
 function parseIsoDate(value: string) {
   const [year, month, day] = value.split("-").map(Number);
@@ -73,12 +165,33 @@ function toIsoDate(value: number) {
   return new Date(value).toISOString().slice(0, 10);
 }
 
-function localTodayIso() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+function todayIsoForTimeZone(timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone,
+    year: "numeric",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function regionFromTimeZone(timeZone: string): RegionId {
+  if (/Khartoum|Juba/i.test(timeZone)) return "sudan";
+  if (/Dubai|Muscat|Riyadh|Bahrain|Qatar|Kuwait|Aden/i.test(timeZone)) return "gulf";
+  return "classical";
+}
+
+function regionFromCoordinates(latitude: number, longitude: number): RegionId {
+  if (latitude >= 4 && latitude <= 23.5 && longitude >= 21 && longitude <= 39.5) return "sudan";
+  if (latitude >= 12 && latitude <= 34 && longitude >= 34 && longitude <= 60) return "gulf";
+  return "classical";
+}
+
+function offsetsFor(mansions: Mansion[]) {
+  return mansions.map((_, mansionIndex) =>
+    mansions.slice(0, mansionIndex).reduce((sum, mansion) => sum + mansion.days, 0),
+  );
 }
 
 function cycleStartForYear(cycleYear: number, anchorIso: string) {
@@ -91,14 +204,14 @@ function cycleYearForDate(dateMs: number, anchorIso: string) {
   return anchorYear + Math.floor((dateMs - parseIsoDate(anchorIso)) / (365 * DAY_MS));
 }
 
-function mansionDateForDate(dateMs: number, anchorIso: string): MansionDate {
+function mansionDateForDate(dateMs: number, anchorIso: string, mansions: Mansion[]): MansionDate {
   const cycleYear = cycleYearForDate(dateMs, anchorIso);
   const cycleStart = cycleStartForYear(cycleYear, anchorIso);
   const cycleDay = Math.floor((dateMs - cycleStart) / DAY_MS) + 1;
   let remaining = cycleDay - 1;
 
-  for (let mansionIndex = 0; mansionIndex < MANSIONS.length; mansionIndex += 1) {
-    const mansion = MANSIONS[mansionIndex];
+  for (let mansionIndex = 0; mansionIndex < mansions.length; mansionIndex += 1) {
+    const mansion = mansions[mansionIndex];
     if (remaining < mansion.days) {
       return {
         cycleDay,
@@ -113,15 +226,7 @@ function mansionDateForDate(dateMs: number, anchorIso: string): MansionDate {
     remaining -= mansion.days;
   }
 
-  return {
-    cycleDay: 1,
-    cycleYear,
-    dateIso: toIsoDate(dateMs),
-    dateMs,
-    dayInMansion: 1,
-    mansion: MANSIONS[0],
-    mansionIndex: 0,
-  };
+  throw new Error("Mansion cycle must total 365 days.");
 }
 
 function formatFullDate(dateMs: number) {
@@ -146,17 +251,44 @@ function monthValue(year: number, month: number) {
   return `${year}-${String(month + 1).padStart(2, "0")}`;
 }
 
-const INITIAL_TODAY_ISO = localTodayIso();
-const INITIAL_TODAY_MS = parseIsoDate(INITIAL_TODAY_ISO);
-const INITIAL_TODAY = new Date(INITIAL_TODAY_MS);
+const INITIAL_TODAY_ISO = todayIsoForTimeZone(REGION_PROFILES.gulf.timeZone);
+const INITIAL_TODAY = new Date(parseIsoDate(INITIAL_TODAY_ISO));
 
 export default function Home() {
-  const [anchorIso, setAnchorIso] = useState(DEFAULT_ANCHOR);
-  const [todayIso] = useState(INITIAL_TODAY_ISO);
+  const [regionId, setRegionId] = useState<RegionId>("gulf");
+  const [anchorIso, setAnchorIso] = useState(REGION_PROFILES.gulf.anchorIso);
+  const [timeZone, setTimeZone] = useState(REGION_PROFILES.gulf.timeZone);
+  const [locationSource, setLocationSource] = useState("Regional default");
+  const [locationMessage, setLocationMessage] = useState("");
+  const [locating, setLocating] = useState(false);
   const [selectedIso, setSelectedIso] = useState(INITIAL_TODAY_ISO);
   const [viewYear, setViewYear] = useState(INITIAL_TODAY.getUTCFullYear());
   const [viewMonth, setViewMonth] = useState(INITIAL_TODAY.getUTCMonth());
   const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const profile = REGION_PROFILES[regionId];
+  const mansions = profile.mansions;
+  const mansionOffsets = useMemo(() => offsetsFor(mansions), [mansions]);
+  const todayIso = todayIsoForTimeZone(timeZone);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const detectedZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      const detectedRegion = regionFromTimeZone(detectedZone);
+      const nextToday = todayIsoForTimeZone(detectedZone);
+      const nextDate = new Date(parseIsoDate(nextToday));
+
+      setTimeZone(detectedZone);
+      setRegionId(detectedRegion);
+      setAnchorIso(REGION_PROFILES[detectedRegion].anchorIso);
+      setLocationSource(`Time zone · ${detectedZone}`);
+      setSelectedIso(nextToday);
+      setViewYear(nextDate.getUTCFullYear());
+      setViewMonth(nextDate.getUTCMonth());
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const monthStart = Date.UTC(viewYear, viewMonth, 1);
   const monthEnd = Date.UTC(viewYear, viewMonth + 1, 0);
@@ -166,7 +298,7 @@ export default function Home() {
     const rowLookup = new Map<string, { cycleYear: number; mansionIndex: number }>();
 
     for (let dateMs = monthStart; dateMs <= monthEnd; dateMs += DAY_MS) {
-      const info = mansionDateForDate(dateMs, anchorIso);
+      const info = mansionDateForDate(dateMs, anchorIso, mansions);
       const key = `${info.cycleYear}-${info.mansionIndex}`;
       if (!rowLookup.has(key)) {
         rowKeys.push(key);
@@ -176,29 +308,28 @@ export default function Home() {
 
     return rowKeys.map((key): MansionRow => {
       const rowInfo = rowLookup.get(key)!;
-      const mansion = MANSIONS[rowInfo.mansionIndex];
+      const mansion = mansions[rowInfo.mansionIndex];
       const startMs =
         cycleStartForYear(rowInfo.cycleYear, anchorIso) +
-        MANSION_OFFSETS[rowInfo.mansionIndex] * DAY_MS;
+        mansionOffsets[rowInfo.mansionIndex] * DAY_MS;
       return {
         cycleYear: rowInfo.cycleYear,
         dates: Array.from({ length: mansion.days }, (_, index) =>
-          mansionDateForDate(startMs + index * DAY_MS, anchorIso),
+          mansionDateForDate(startMs + index * DAY_MS, anchorIso, mansions),
         ),
         mansion,
         mansionIndex: rowInfo.mansionIndex,
         startMs,
       };
     });
-  }, [anchorIso, monthEnd, monthStart]);
+  }, [anchorIso, mansionOffsets, mansions, monthEnd, monthStart]);
 
   const selectedDateMs = parseIsoDate(selectedIso);
-  const selectedDay = mansionDateForDate(selectedDateMs, anchorIso);
+  const selectedDay = mansionDateForDate(selectedDateMs, anchorIso, mansions);
   const selectedMansionStart =
     cycleStartForYear(selectedDay.cycleYear, anchorIso) +
-    MANSION_OFFSETS[selectedDay.mansionIndex] * DAY_MS;
-  const selectedMansionEnd =
-    selectedMansionStart + (selectedDay.mansion.days - 1) * DAY_MS;
+    mansionOffsets[selectedDay.mansionIndex] * DAY_MS;
+  const selectedMansionEnd = selectedMansionStart + (selectedDay.mansion.days - 1) * DAY_MS;
   const selectedCycleStart = cycleStartForYear(selectedDay.cycleYear, anchorIso);
   const selectedCycleEnd = selectedCycleStart + 364 * DAY_MS;
 
@@ -207,6 +338,38 @@ export default function Home() {
     timeZone: "UTC",
     year: "numeric",
   }).format(new Date(monthStart));
+
+  function applyRegion(nextRegion: RegionId, source: string, nextTimeZone?: string) {
+    const nextProfile = REGION_PROFILES[nextRegion];
+    setRegionId(nextRegion);
+    setAnchorIso(nextProfile.anchorIso);
+    setTimeZone(nextTimeZone || nextProfile.timeZone);
+    setLocationSource(source);
+    setLocationMessage("");
+  }
+
+  function useMyLocation() {
+    if (!("geolocation" in navigator)) {
+      setLocationMessage("Location is unavailable in this browser. Choose a region below.");
+      return;
+    }
+
+    setLocating(true);
+    setLocationMessage("");
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const nextRegion = regionFromCoordinates(coords.latitude, coords.longitude);
+        const nextProfile = REGION_PROFILES[nextRegion];
+        applyRegion(nextRegion, `Location · ${coords.latitude.toFixed(2)}°, ${coords.longitude.toFixed(2)}°`, nextProfile.timeZone);
+        setLocating(false);
+      },
+      () => {
+        setLocating(false);
+        setLocationMessage("Location permission was not available. The time-zone profile is still active.");
+      },
+      { enableHighAccuracy: false, maximumAge: 86_400_000, timeout: 10_000 },
+    );
+  }
 
   function selectDate(dateIso: string) {
     const date = new Date(parseIsoDate(dateIso));
@@ -248,16 +411,19 @@ export default function Home() {
           <div className="moon-mark" aria-hidden="true"><span /></div>
           <div>
             <h1>Lunar Mansion Calendar</h1>
-            <p>13-day mansion weeks · Gregorian calendar months</p>
+            <p>Regional 365-day mansion cycle · Gregorian months</p>
           </div>
         </div>
 
         <div className="top-actions">
+          <button className="location-pill" type="button" onClick={() => setSettingsOpen(true)}>
+            <span aria-hidden="true">⌖</span>{profile.shortLabel}
+          </button>
           <button className="today-button" type="button" onClick={goToToday}>Today</button>
           <button
             className={`settings-button ${settingsOpen ? "active" : ""}`}
             type="button"
-            aria-label="Open cycle settings"
+            aria-label="Open regional cycle settings"
             aria-expanded={settingsOpen}
             onClick={() => setSettingsOpen((open) => !open)}
           >
@@ -266,33 +432,51 @@ export default function Home() {
         </div>
 
         {settingsOpen && (
-          <section className="settings-popover" aria-label="Cycle settings">
+          <section className="settings-popover" aria-label="Regional cycle settings">
             <div className="settings-heading">
               <div>
-                <p className="eyebrow">Reference point</p>
-                <h2>Cycle alignment</h2>
+                <p className="eyebrow">Location & tradition</p>
+                <h2>Regional alignment</h2>
               </div>
               <button type="button" onClick={() => setSettingsOpen(false)} aria-label="Close settings">×</button>
             </div>
+
+            <div className="detected-location">
+              <span aria-hidden="true">⌖</span>
+              <div><strong>{profile.label}</strong><small>{locationSource}</small></div>
+            </div>
+
+            <button className="locate-button" type="button" onClick={useMyLocation} disabled={locating}>
+              {locating ? "Locating…" : "Use my regional location"}
+            </button>
+            {locationMessage && <p className="location-message">{locationMessage}</p>}
+
             <label>
-              <span>Al‑Sharatain · Day 1</span>
+              <span>Regional tradition</span>
+              <select
+                value={regionId}
+                onChange={(event) => {
+                  const nextRegion = event.currentTarget.value as RegionId;
+                  applyRegion(nextRegion, "Manual regional selection");
+                }}
+              >
+                {Object.values(REGION_PROFILES).map((item) => (
+                  <option value={item.id} key={item.id}>{item.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>{mansions[0].en} · Day 1 reference</span>
               <input
                 type="date"
                 value={anchorIso}
-                onChange={(event) => {
-                  if (event.currentTarget.value) setAnchorIso(event.currentTarget.value);
-                }}
-                onInput={(event) => {
-                  if (event.currentTarget.value) setAnchorIso(event.currentTarget.value);
-                }}
+                onChange={(event) => event.currentTarget.value && setAnchorIso(event.currentTarget.value)}
               />
             </label>
-            <p>
-              The mansion cycle remains exactly 365 days. Gregorian leap days shift the month overlay;
-              they are not added to a mansion week.
-            </p>
-            <button className="reset-button" type="button" onClick={() => setAnchorIso(DEFAULT_ANCHOR)}>
-              Reset reference
+            <p>{profile.description} The date can be corrected for a more specific local tradition.</p>
+            <button className="reset-button" type="button" onClick={() => setAnchorIso(profile.anchorIso)}>
+              Reset regional alignment
             </button>
           </section>
         )}
@@ -314,26 +498,31 @@ export default function Home() {
                 type="month"
                 value={monthValue(viewYear, viewMonth)}
                 onChange={(event) => setMonthFromValue(event.currentTarget.value)}
-                onInput={(event) => setMonthFromValue(event.currentTarget.value)}
               />
             </label>
           </div>
 
-          <div className="calendar-scroll">
+          <div className="alignment-strip">
+            <span><b>⌖</b>{profile.label}</span>
+            <span><b>◷</b>{timeZone}</span>
+            <span><b>◇</b>{mansions[0].en} day 1 · {formatShortDate(parseIsoDate(anchorIso))}</span>
+          </div>
+
+          <div className="calendar-frame">
             <div className="mansion-calendar" role="table" aria-label={`${monthTitle} by mansion day`}>
               <div className="calendar-header" role="row">
                 <div className="mansion-column-head" role="columnheader">
-                  <span>Week</span>
-                  <strong>Lunar mansion</strong>
+                  <span>Regional week</span>
+                  <strong>Mansion</strong>
                 </div>
                 {Array.from({ length: 13 }, (_, index) => (
                   <div className="day-column-head" role="columnheader" key={index + 1}>
-                    <span>Mansion day</span>
+                    <span>Day</span>
                     <strong>{index + 1}</strong>
                   </div>
                 ))}
                 <div className="day-column-head extra-column-head" role="columnheader">
-                  <span>Al‑Jabha only</span>
+                  <span>Jabha</span>
                   <strong>14</strong>
                 </div>
               </div>
@@ -386,12 +575,12 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="scroll-hint"><span>↔</span> Swipe horizontally to see all 13 mansion days</div>
+          <div className="fit-note"><span>↔</span> All mansion-day columns resize to fit this view</div>
         </section>
 
         <section className="detail-grid" aria-live="polite">
           <article className="selected-card">
-            <p className="eyebrow">{selectedIso === todayIso ? "Today" : "Selected date"}</p>
+            <p className="eyebrow">{selectedIso === todayIso ? `Today · ${profile.shortLabel}` : "Selected date"}</p>
             <h2>{formatFullDate(selectedDateMs)}</h2>
             <label className="date-jump">
               <span>Choose any date</span>
@@ -399,7 +588,6 @@ export default function Home() {
                 type="date"
                 value={selectedIso}
                 onChange={(event) => event.currentTarget.value && selectDate(event.currentTarget.value)}
-                onInput={(event) => event.currentTarget.value && selectDate(event.currentTarget.value)}
               />
             </label>
           </article>
@@ -408,11 +596,12 @@ export default function Home() {
             <div className="mansion-card-title">
               <span>{String(selectedDay.mansionIndex + 1).padStart(2, "0")}</span>
               <div>
-                <p>Mansion week</p>
+                <p>{profile.label} mansion</p>
                 <h3>{selectedDay.mansion.en}</h3>
               </div>
               <b lang="ar" dir="rtl">{selectedDay.mansion.ar}</b>
             </div>
+            {selectedDay.mansion.localNote && <p className="local-name-note">{selectedDay.mansion.localNote}</p>}
             <dl>
               <div><dt>Day in mansion</dt><dd>{selectedDay.dayInMansion}<small> / {selectedDay.mansion.days}</small></dd></div>
               <div><dt>Mansion span</dt><dd className="range-value">{formatShortDate(selectedMansionStart)}<small> to </small>{formatShortDate(selectedMansionEnd)}</dd></div>
@@ -424,10 +613,10 @@ export default function Home() {
           </article>
 
           <article className="cycle-card">
-            <p className="eyebrow">Continuous mansion cycle {selectedDay.cycleYear}</p>
+            <p className="eyebrow">Regional cycle · {profile.label}</p>
             <h3>{formatShortDate(selectedCycleStart)} — {formatShortDate(selectedCycleEnd)}</h3>
             <div className="equation"><span>27 × 13</span><b>+</b><span>Al‑Jabha 14</span><b>=</b><strong>365 days</strong></div>
-            <p>Calendar months are an overlay and may cross several mansion weeks.</p>
+            <p>Location selects the regional names, reference alignment and local day boundary. You can override the detected region in settings.</p>
           </article>
         </section>
       </section>
@@ -454,12 +643,8 @@ function DateCell({
 }) {
   const date = new Date(day.dateMs);
   const inMonth = date.getUTCFullYear() === viewYear && date.getUTCMonth() === viewMonth;
-  const weekday = new Intl.DateTimeFormat("en-GB", { weekday: "short", timeZone: "UTC" })
-    .format(date)
-    .toUpperCase();
-  const month = new Intl.DateTimeFormat("en-GB", { month: "short", timeZone: "UTC" })
-    .format(date)
-    .toUpperCase();
+  const weekday = new Intl.DateTimeFormat("en-GB", { weekday: "short", timeZone: "UTC" }).format(date).toUpperCase();
+  const month = new Intl.DateTimeFormat("en-GB", { month: "short", timeZone: "UTC" }).format(date).toUpperCase();
 
   return (
     <button

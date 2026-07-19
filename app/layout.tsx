@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Lunar Mansion Calendar",
   description:
-    "An interactive monthly calendar of the 28 Arabic lunar mansions with 13 mansion-day columns and Gregorian dates.",
+    "A responsive regional calendar of the 28 Arabic seasonal lunar mansions, with 13 mansion days and a fourteenth day for Al-Jabha.",
   other: {
     "codex-preview": "development",
   },
