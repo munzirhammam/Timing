@@ -4,7 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import { OUTLOOK_ICONS, OUTLOOKS } from "./outlooks";
 import { OUTLOOKS_AR } from "./outlooks-ar";
 
-type RegionId = "gulf" | "sudan" | "australia" | "classical";
+type RegionId =
+  | "gulf"
+  | "sudan"
+  | "australia_tropical"
+  | "australia_central"
+  | "australia_temperate"
+  | "classical";
 type Language = "en" | "ar";
 type LocationSource =
   | { kind: "default" }
@@ -17,10 +23,20 @@ type LocationMessage = "" | "unavailable" | "denied";
 type Mansion = {
   en: string;
   ar: string;
+  starEn: string;
+  starAr: string;
+  designation: string;
+  constellationEn: string;
+  constellationAr: string;
   days: number;
   localNote?: string;
   localNoteAr?: string;
 };
+
+type SkyMarker = Pick<
+  Mansion,
+  "starEn" | "starAr" | "designation" | "constellationEn" | "constellationAr"
+>;
 
 type RegionProfile = {
   id: RegionId;
@@ -56,17 +72,47 @@ type MansionRow = {
 const DAY_MS = 86_400_000;
 const MANSION_LENGTHS = Array.from({ length: 28 }, (_, index) => (index === 9 ? 14 : 13));
 const GULF_ANCHOR_ISO = "2026-05-12";
-const SOUTHERN_HEMISPHERE_SHIFT_DAYS = MANSION_LENGTHS
-  .slice(0, 14)
-  .reduce((sum, days) => sum + days, 0);
-const AUSTRALIA_ANCHOR_ISO = new Date(
-  Date.parse(`${GULF_ANCHOR_ISO}T00:00:00Z`) + SOUTHERN_HEMISPHERE_SHIFT_DAYS * DAY_MS,
-).toISOString().slice(0, 10);
+
+const SKY_MARKERS: SkyMarker[] = [
+  { starEn: "Sheratan–Mesarthim Pair", starAr: "زوج شيراتان وميسارثيم", designation: "β–γ Arietis", constellationEn: "Aries", constellationAr: "الحمل" },
+  { starEn: "Aries Belly Stars", starAr: "نجوم بطن الحمل", designation: "δ–ε Arietis", constellationEn: "Aries", constellationAr: "الحمل" },
+  { starEn: "Pleiades Cluster", starAr: "عنقود الثريا", designation: "M45", constellationEn: "Taurus", constellationAr: "الثور" },
+  { starEn: "Aldebaran", starAr: "نجم الدبران", designation: "α Tauri", constellationEn: "Taurus", constellationAr: "الثور" },
+  { starEn: "Meissa–Phi Orionis Group", starAr: "مجموعة ميسا وفاي الجبار", designation: "λ, φ¹, φ² Orionis", constellationEn: "Orion", constellationAr: "الجبار" },
+  { starEn: "Gamma–Xi Geminorum Pair", starAr: "زوج غاما وإكساي التوأمين", designation: "γ–ξ Geminorum", constellationEn: "Gemini", constellationAr: "التوأمان" },
+  { starEn: "Castor–Pollux Pair", starAr: "زوج كاستور وبولوكس", designation: "α–β Geminorum", constellationEn: "Gemini", constellationAr: "التوأمان" },
+  { starEn: "Beehive Cluster", starAr: "عنقود خلية النحل", designation: "M44", constellationEn: "Cancer", constellationAr: "السرطان" },
+  { starEn: "Cancer–Leo Eye Pair", starAr: "زوج عين الأسد بين السرطان والأسد", designation: "κ Cancri · λ Leonis", constellationEn: "Cancer–Leo", constellationAr: "السرطان والأسد" },
+  { starEn: "Leo Forehead Asterism", starAr: "مجموعة نجوم جبهة الأسد", designation: "ζ, γ, η, α Leonis", constellationEn: "Leo", constellationAr: "الأسد" },
+  { starEn: "Zosma–Chertan Pair", starAr: "زوج زوسما وشرتان", designation: "δ–θ Leonis", constellationEn: "Leo", constellationAr: "الأسد" },
+  { starEn: "Denebola", starAr: "نجم ذنب الأسد", designation: "β Leonis", constellationEn: "Leo", constellationAr: "الأسد" },
+  { starEn: "Virgo Arc Asterism", starAr: "قوس نجوم العذراء", designation: "β, η, γ, δ, ε Virginis", constellationEn: "Virgo", constellationAr: "العذراء" },
+  { starEn: "Spica", starAr: "نجم السنبلة", designation: "α Virginis", constellationEn: "Virgo", constellationAr: "العذراء" },
+  { starEn: "Virgo Veil Trio", starAr: "ثلاثي نجوم العذراء", designation: "ι, κ, λ Virginis", constellationEn: "Virgo", constellationAr: "العذراء" },
+  { starEn: "Libra Balance Pair", starAr: "زوج كفتي الميزان", designation: "α–β Librae", constellationEn: "Libra", constellationAr: "الميزان" },
+  { starEn: "Scorpion Crown Trio", starAr: "ثلاثي إكليل العقرب", designation: "β, δ, π Scorpii", constellationEn: "Scorpius", constellationAr: "العقرب" },
+  { starEn: "Antares", starAr: "نجم قلب العقرب", designation: "α Scorpii", constellationEn: "Scorpius", constellationAr: "العقرب" },
+  { starEn: "Shaula–Lesath Pair", starAr: "زوج الشولة ولسعة", designation: "λ–υ Scorpii", constellationEn: "Scorpius", constellationAr: "العقرب" },
+  { starEn: "Sagittarius Eight-Star Group", starAr: "مجموعة نجوم القوس الثمانية", designation: "γ, δ, ε, η, ρ, φ, τ, ζ Sagittarii", constellationEn: "Sagittarius", constellationAr: "القوس" },
+  { starEn: "Pi Sagittarii & Star-Poor Field", starAr: "باي القوس والحقل قليل النجوم", designation: "π Sagittarii · sparse field", constellationEn: "Sagittarius", constellationAr: "القوس" },
+  { starEn: "Dabih Pair", starAr: "زوج الذابح", designation: "α–β Capricorni", constellationEn: "Capricornus", constellationAr: "الجدي" },
+  { starEn: "Mu–Nu Aquarii Pair", starAr: "زوج ميو ونيو الدلو", designation: "μ–ν Aquarii", constellationEn: "Aquarius", constellationAr: "الدلو" },
+  { starEn: "Sadalsuud–Xi Aquarii Pair", starAr: "زوج سعد السعود وإكساي الدلو", designation: "β–ξ Aquarii", constellationEn: "Aquarius", constellationAr: "الدلو" },
+  { starEn: "Sadachbia Group", starAr: "مجموعة سعد الأخبية", designation: "γ, ζ, η, π Aquarii", constellationEn: "Aquarius", constellationAr: "الدلو" },
+  { starEn: "Markab–Scheat Pair", starAr: "زوج المركب ومنكب الفرس", designation: "α–β Pegasi", constellationEn: "Pegasus", constellationAr: "الفرس الأعظم" },
+  { starEn: "Algenib–Alpheratz Pair", starAr: "زوج الجنب وسرة الفرس", designation: "γ Pegasi · α Andromedae", constellationEn: "Pegasus–Andromeda", constellationAr: "الفرس الأعظم والمرأة المسلسلة" },
+  { starEn: "Mirach", starAr: "نجم المراق", designation: "β Andromedae", constellationEn: "Andromeda", constellationAr: "المرأة المسلسلة" },
+];
+
+if (SKY_MARKERS.length !== 28 || MANSION_LENGTHS.reduce((sum, days) => sum + days, 0) !== 365) {
+  throw new Error("The star-station cycle must contain 28 markers and total 365 days.");
+}
 
 function mansionSet(names: Array<[string, string, string?, string?]>): Mansion[] {
   return names.map(([en, ar, localNote, localNoteAr], index) => ({
     en,
     ar,
+    ...SKY_MARKERS[index],
     localNote,
     localNoteAr,
     days: MANSION_LENGTHS[index],
@@ -148,15 +194,17 @@ const CLASSICAL_MANSIONS = mansionSet([
   ["Al-Fargh Al-Mu'akhkhar", "الفرغ المؤخر"], ["Al-Risha'", "الرشاء"],
 ]);
 
-const AUSTRALIA_MANSIONS: Mansion[] = CLASSICAL_MANSIONS.map((mansion, index) => ({
-  ...mansion,
-  localNote: index === 9
-    ? "Southern Hemisphere seasonal alignment · 14 days"
-    : "Southern Hemisphere seasonal alignment",
-  localNoteAr: index === 9
-    ? "محاذاة موسمية لنصف الكرة الجنوبي · 14 يومًا"
-    : "محاذاة موسمية لنصف الكرة الجنوبي",
-}));
+function australiaMansions(zone: string, zoneAr: string): Mansion[] {
+  return CLASSICAL_MANSIONS.map((mansion, index) => ({
+    ...mansion,
+    localNote: `${zone} dawn alignment${index === 9 ? " · 14 days" : ""}`,
+    localNoteAr: `محاذاة الفجر في ${zoneAr}${index === 9 ? " · 14 يومًا" : ""}`,
+  }));
+}
+
+const AUSTRALIA_TROPICAL_MANSIONS = australiaMansions("Tropical North", "الشمال المداري");
+const AUSTRALIA_CENTRAL_MANSIONS = australiaMansions("Subtropical & Central", "الوسط وشبه المداري");
+const AUSTRALIA_TEMPERATE_MANSIONS = australiaMansions("Temperate South", "الجنوب المعتدل");
 
 const REGION_PROFILES: Record<RegionId, RegionProfile> = {
   gulf: {
@@ -183,17 +231,41 @@ const REGION_PROFILES: Record<RegionId, RegionProfile> = {
     descriptionAr: "أسماء العِينات السودانية مع المحاذاة الموسمية الإقليمية.",
     mansions: SUDAN_MANSIONS,
   },
-  australia: {
-    id: "australia",
-    label: "Australia · Southern Hemisphere",
-    labelAr: "أستراليا · نصف الكرة الجنوبي",
-    shortLabel: "Australia",
-    shortLabelAr: "أستراليا",
-    anchorIso: AUSTRALIA_ANCHOR_ISO,
+  australia_tropical: {
+    id: "australia_tropical",
+    label: "Australia · Tropical North",
+    labelAr: "أستراليا · الشمال المداري",
+    shortLabel: "Tropical North",
+    shortLabelAr: "الشمال المداري",
+    anchorIso: "2026-05-13",
+    timeZone: "Australia/Darwin",
+    description: "Tropical North reference: the Sheratan–Mesarthim marker begins near its traditional first dawn appearance. Reference coordinates: Darwin.",
+    descriptionAr: "مرجع الشمال المداري: تبدأ علامة شيراتان–ميسارثيم قرب أول ظهور تقليدي لها عند الفجر. إحداثيات المرجع: داروين.",
+    mansions: AUSTRALIA_TROPICAL_MANSIONS,
+  },
+  australia_central: {
+    id: "australia_central",
+    label: "Australia · Subtropical & Central",
+    labelAr: "أستراليا · الوسط وشبه المداري",
+    shortLabel: "Central Australia",
+    shortLabelAr: "وسط أستراليا",
+    anchorIso: "2026-05-14",
+    timeZone: "Australia/Darwin",
+    description: "Subtropical and central reference: the Sheratan–Mesarthim marker begins near its traditional first dawn appearance. Reference coordinates: Alice Springs.",
+    descriptionAr: "مرجع الوسط وشبه المداري: تبدأ علامة شيراتان–ميسارثيم قرب أول ظهور تقليدي لها عند الفجر. إحداثيات المرجع: أليس سبرينغز.",
+    mansions: AUSTRALIA_CENTRAL_MANSIONS,
+  },
+  australia_temperate: {
+    id: "australia_temperate",
+    label: "Australia · Temperate South",
+    labelAr: "أستراليا · الجنوب المعتدل",
+    shortLabel: "Temperate South",
+    shortLabelAr: "الجنوب المعتدل",
+    anchorIso: "2026-05-17",
     timeZone: "Australia/Sydney",
-    description: "A 13-day Southern Hemisphere seasonal alignment, shifted by 14 mansion boundaries (183 days) from the Arabian Gulf reference.",
-    descriptionAr: "محاذاة موسمية لنصف الكرة الجنوبي من 13 يومًا، مزاحة 14 منزلة (183 يومًا) عن مرجع الخليج العربي.",
-    mansions: AUSTRALIA_MANSIONS,
+    description: "Temperate South reference: the Sheratan–Mesarthim marker begins near its traditional first dawn appearance. Reference latitude: 35° south.",
+    descriptionAr: "مرجع الجنوب المعتدل: تبدأ علامة شيراتان–ميسارثيم قرب أول ظهور تقليدي لها عند الفجر. خط العرض المرجعي: 35° جنوبًا.",
+    mansions: AUSTRALIA_TEMPERATE_MANSIONS,
   },
   classical: {
     id: "classical",
@@ -211,8 +283,8 @@ const REGION_PROFILES: Record<RegionId, RegionProfile> = {
 
 const COPY = {
   en: {
-    appTitle: "Lunar Mansion Calendar",
-    appSubtitle: "Regional 365-day mansion cycle · Gregorian months",
+    appTitle: "Seasonal Star Calendar",
+    appSubtitle: "Regional 365-day star-station cycle · Gregorian months",
     language: "Language",
     english: "English",
     arabic: "العربية",
@@ -221,17 +293,17 @@ const COPY = {
     closeSettings: "Close settings",
     settingsLabel: "Regional cycle settings",
     locationTradition: "Location & tradition",
-    regionalAlignment: "Regional alignment",
+    regionalAlignment: "Dawn alignment",
     useMyLocation: "Use my regional location",
     locating: "Locating…",
     regionalTradition: "Regional tradition",
     dayOneReference: "Day 1 reference",
-    correctionNote: "The date can be corrected for a more specific local tradition.",
+    correctionNote: "The date can be corrected for a more specific horizon or local observation.",
     runningOffline: "Running offline",
     offlineReady: "Offline ready",
     preparingOffline: "Preparing offline use",
     offlineHelp: "After one online visit, the calendar and regional outlook can reopen without a connection.",
-    resetAlignment: "Reset regional alignment",
+    resetAlignment: "Reset dawn alignment",
     unavailableLocation: "Location is unavailable in this browser. Choose a region below.",
     deniedLocation: "Location permission was not available. The time-zone profile is still active.",
     regionalDefault: "Regional default",
@@ -246,35 +318,40 @@ const COPY = {
     dayOne: "day 1",
     offlineMode: "Offline mode",
     online: "Online",
-    regionalWeek: "Regional week",
-    mansion: "Mansion",
+    regionalWeek: "13-day period",
+    mansion: "Sky marker",
     day: "Day",
-    jabha: "Jabha",
+    jabha: "14th",
     noFourteenthDay: "No fourteenth day",
-    calendarFit: "All mansion-day columns resize to fit this view",
+    calendarFit: "All 13 star-period day columns resize to fit this view",
     selectedDate: "Selected date",
     chooseDate: "Choose any date",
-    regionMansion: "mansion",
-    dayInMansion: "Day in mansion",
-    mansionSpan: "Mansion span",
+    regionMansion: "sky marker",
+    dayInMansion: "Day in period",
+    mansionSpan: "Period span",
     to: "to",
     cycleDay: "Cycle day",
-    jabhaOnly: "Al‑Jabha is the only 14-day mansion.",
+    jabhaOnly: "The Leo Forehead period—traditional Al‑Jabha—is the only 14-day station.",
     regionalCycle: "Regional cycle",
-    cycleExplanation: "Location selects the regional names, reference alignment and local day boundary. You can override the detected region in settings.",
-    traditionalIndication: "Traditional seasonal indication",
-    outlookTitle: "REGIONAL LUNAR-MANSION OUTLOOK",
+    cycleExplanation: "Location selects the dawn reference, regional seasonal outlook and local day boundary. You can override the detected region in settings.",
+    traditionalIndication: "Regional seasonal indication",
+    outlookTitle: "REGIONAL STAR-STATION OUTLOOK",
     landWater: "Land & water",
     practicalNote: "Practical note",
-    nextMansion: "Next mansion",
+    nextMansion: "Next sky marker",
     disclaimer: "This is a traditional regional climatological outlook, not a live weather forecast or safety warning. Conditions vary by coast, desert, elevation and local rainfall; use official forecasts for decisions.",
-    throughMansion: "through this mansion",
-    calendarLabel: "Interactive lunar mansion calendar",
-    dateByMansionDay: "by mansion day",
+    throughMansion: "through this period",
+    calendarLabel: "Interactive seasonal star calendar",
+    dateByMansionDay: "by star-period day",
+    traditionalMansion: "Traditional mansion",
+    designation: "Star designation",
+    constellation: "Constellation",
+    dawnReference: "Dawn alignment reference",
+    visibilityNote: "The listed star or group is the traditional sky marker for this 13-day period. Dawn visibility is approximate; clouds, terrain, twilight and exact coordinates affect observation.",
   },
   ar: {
-    appTitle: "تقويم المنازل القمرية",
-    appSubtitle: "دورة إقليمية من 365 يومًا · الأشهر الميلادية",
+    appTitle: "تقويم النجوم الموسمية",
+    appSubtitle: "دورة إقليمية لمحطات النجوم من 365 يومًا · الأشهر الميلادية",
     language: "اللغة",
     english: "English",
     arabic: "العربية",
@@ -283,17 +360,17 @@ const COPY = {
     closeSettings: "إغلاق الإعدادات",
     settingsLabel: "إعدادات الدورة الإقليمية",
     locationTradition: "الموقع والتقليد",
-    regionalAlignment: "المحاذاة الإقليمية",
+    regionalAlignment: "محاذاة الفجر",
     useMyLocation: "استخدام موقعي الإقليمي",
     locating: "جارٍ تحديد الموقع…",
     regionalTradition: "التقليد الإقليمي",
     dayOneReference: "مرجع اليوم الأول",
-    correctionNote: "يمكن تصحيح التاريخ ليتوافق مع تقليد محلي أكثر تحديدًا.",
+    correctionNote: "يمكن تصحيح التاريخ ليتوافق مع أفق أو رصد محلي أكثر تحديدًا.",
     runningOffline: "يعمل دون اتصال",
     offlineReady: "جاهز دون اتصال",
     preparingOffline: "جارٍ التجهيز للعمل دون اتصال",
     offlineHelp: "بعد زيارة واحدة عبر الإنترنت، يمكن فتح التقويم والدلالة الإقليمية دون اتصال.",
-    resetAlignment: "إعادة ضبط المحاذاة الإقليمية",
+    resetAlignment: "إعادة ضبط محاذاة الفجر",
     unavailableLocation: "الموقع غير متاح في هذا المتصفح. اختر منطقة أدناه.",
     deniedLocation: "لم يتوفر إذن الموقع. ما زال ملف المنطقة الزمنية فعالًا.",
     regionalDefault: "الإعداد الإقليمي الافتراضي",
@@ -308,31 +385,36 @@ const COPY = {
     dayOne: "اليوم 1",
     offlineMode: "وضع عدم الاتصال",
     online: "متصل",
-    regionalWeek: "الأسبوع الإقليمي",
-    mansion: "المنزل",
+    regionalWeek: "فترة 13 يومًا",
+    mansion: "علامة السماء",
     day: "اليوم",
-    jabha: "الجبهة",
+    jabha: "اليوم 14",
     noFourteenthDay: "لا يوجد يوم رابع عشر",
-    calendarFit: "تتغير أحجام جميع أعمدة أيام المنازل لتلائم هذا العرض",
+    calendarFit: "تتغير أحجام أعمدة الأيام الثلاثة عشر لتلائم هذا العرض",
     selectedDate: "التاريخ المحدد",
     chooseDate: "اختر أي تاريخ",
-    regionMansion: "منزل",
-    dayInMansion: "اليوم في المنزل",
-    mansionSpan: "مدة المنزل",
+    regionMansion: "علامة سماء",
+    dayInMansion: "اليوم في الفترة",
+    mansionSpan: "مدة الفترة",
     to: "إلى",
     cycleDay: "يوم الدورة",
-    jabhaOnly: "الجبهة هي المنزل الوحيد الذي يمتد 14 يومًا.",
+    jabhaOnly: "فترة مجموعة جبهة الأسد — الجبهة تقليديًا — هي المحطة الوحيدة الممتدة 14 يومًا.",
     regionalCycle: "الدورة الإقليمية",
-    cycleExplanation: "يحدد الموقع الأسماء الإقليمية والمحاذاة المرجعية وحدود اليوم المحلي. ويمكنك تغيير المنطقة المكتشفة من الإعدادات.",
-    traditionalIndication: "الدلالة الموسمية التقليدية",
-    outlookTitle: "الدلالة الإقليمية للمنازل القمرية",
+    cycleExplanation: "يحدد الموقع مرجع الفجر والدلالة الموسمية الإقليمية وحدود اليوم المحلي. ويمكنك تغيير المنطقة المكتشفة من الإعدادات.",
+    traditionalIndication: "الدلالة الموسمية الإقليمية",
+    outlookTitle: "الدلالة الإقليمية لمحطات النجوم",
     landWater: "الأرض والمياه",
     practicalNote: "ملاحظة عملية",
-    nextMansion: "المنزل التالي",
+    nextMansion: "علامة السماء التالية",
     disclaimer: "هذه دلالة مناخية إقليمية تقليدية، وليست توقعًا مباشرًا للطقس أو تحذيرًا للسلامة. تختلف الظروف بحسب الساحل والصحراء والارتفاع والمطر المحلي؛ استخدم التوقعات الرسمية لاتخاذ القرارات.",
-    throughMansion: "من هذا المنزل",
-    calendarLabel: "تقويم تفاعلي للمنازل القمرية",
-    dateByMansionDay: "بحسب يوم المنزل",
+    throughMansion: "من هذه الفترة",
+    calendarLabel: "تقويم تفاعلي للنجوم الموسمية",
+    dateByMansionDay: "بحسب يوم فترة النجم",
+    traditionalMansion: "المنزل التقليدي",
+    designation: "التعيين النجمي",
+    constellation: "الكوكبة",
+    dawnReference: "مرجع محاذاة الفجر",
+    visibilityNote: "النجم أو المجموعة المدرجة هي علامة السماء التقليدية لهذه الفترة ذات 13 يومًا. الرؤية عند الفجر تقريبية؛ إذ تؤثر السحب والتضاريس والشفق والإحداثيات الدقيقة في الرصد.",
   },
 } as const;
 
@@ -349,6 +431,14 @@ function mansionName(mansion: Mansion, language: Language) {
   return language === "ar" ? mansion.ar : mansion.en;
 }
 
+function skyMarkerName(mansion: Mansion, language: Language) {
+  return language === "ar" ? mansion.starAr : mansion.starEn;
+}
+
+function constellationName(mansion: Mansion, language: Language) {
+  return language === "ar" ? mansion.constellationAr : mansion.constellationEn;
+}
+
 function formatNumber(value: number, language: Language, minimumIntegerDigits = 1) {
   return new Intl.NumberFormat(localeFor(language), {
     minimumIntegerDigits,
@@ -358,8 +448,8 @@ function formatNumber(value: number, language: Language, minimumIntegerDigits = 
 
 function mansionWeeksLabel(count: number, language: Language) {
   return language === "ar"
-    ? `${formatNumber(count, language)} أسابيع منازل تتقاطع مع هذا الشهر`
-    : `${count} mansion weeks intersect this month`;
+    ? `${formatNumber(count, language)} فترات نجمية تتقاطع مع هذا الشهر`
+    : `${count} star periods intersect this month`;
 }
 
 function formatLocationSource(source: LocationSource, language: Language) {
@@ -394,8 +484,10 @@ function todayIsoForTimeZone(timeZone: string) {
 function regionFromTimeZone(timeZone: string): RegionId {
   if (/Khartoum|Juba/i.test(timeZone)) return "sudan";
   if (/Dubai|Muscat|Riyadh|Bahrain|Qatar|Kuwait|Aden/i.test(timeZone)) return "gulf";
-  if (/^Australia\//i.test(timeZone) || /^(Pacific\/Norfolk|Indian\/(Christmas|Cocos)|Antarctica\/Macquarie)$/i.test(timeZone)) {
-    return "australia";
+  if (/Australia\/(Darwin)|Indian\/(Christmas|Cocos)/i.test(timeZone)) return "australia_tropical";
+  if (/Australia\/(Brisbane|Broken_Hill|Eucla)|Pacific\/Norfolk/i.test(timeZone)) return "australia_central";
+  if (/Australia\/(Sydney|Melbourne|Hobart|Adelaide|Perth|Lord_Howe)|Antarctica\/Macquarie/i.test(timeZone)) {
+    return "australia_temperate";
   }
   return "classical";
 }
@@ -403,11 +495,15 @@ function regionFromTimeZone(timeZone: string): RegionId {
 function regionFromCoordinates(latitude: number, longitude: number): RegionId {
   if (latitude >= 4 && latitude <= 23.5 && longitude >= 21 && longitude <= 39.5) return "sudan";
   if (latitude >= 12 && latitude <= 34 && longitude >= 34 && longitude <= 60) return "gulf";
-  if (
+  const isAustralianArea =
     (latitude >= -44.5 && latitude <= -9 && longitude >= 112 && longitude <= 154.5) ||
     (latitude >= -30.5 && latitude <= -28.5 && longitude >= 167 && longitude <= 169) ||
-    (latitude >= -13 && latitude <= -10 && longitude >= 95 && longitude <= 106)
-  ) return "australia";
+    (latitude >= -13 && latitude <= -10 && longitude >= 95 && longitude <= 106);
+  if (isAustralianArea) {
+    if (latitude > -23.5) return "australia_tropical";
+    if (latitude <= -30.5) return "australia_temperate";
+    return "australia_central";
+  }
   return "classical";
 }
 
@@ -502,10 +598,14 @@ export default function Home() {
     const timer = window.setTimeout(() => {
       const detectedZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
       const storedLanguage = window.localStorage.getItem("lunar-mansion-language") as Language | null;
-      const storedRegion = window.localStorage.getItem("lunar-mansion-region") as RegionId | null;
-      const detectedRegion = storedRegion && storedRegion in REGION_PROFILES
-        ? storedRegion
-        : regionFromTimeZone(detectedZone);
+      const storedRegionValue = window.localStorage.getItem("lunar-mansion-region");
+      const zoneRegion = regionFromTimeZone(detectedZone);
+      const isLegacyAustralia = storedRegionValue === "australia";
+      const detectedRegion: RegionId = isLegacyAustralia
+        ? zoneRegion.startsWith("australia_") ? zoneRegion : "australia_temperate"
+        : storedRegionValue && storedRegionValue in REGION_PROFILES
+          ? storedRegionValue as RegionId
+          : zoneRegion;
       const storedAnchor = window.localStorage.getItem("lunar-mansion-anchor");
       const storedTimeZone = window.localStorage.getItem("lunar-mansion-timezone");
       const activeZone = storedTimeZone || detectedZone;
@@ -517,8 +617,8 @@ export default function Home() {
         ? storedLanguage
         : navigator.language.toLowerCase().startsWith("ar") ? "ar" : "en");
       setRegionId(detectedRegion);
-      setAnchorIso(storedAnchor || REGION_PROFILES[detectedRegion].anchorIso);
-      setLocationSource(storedRegion ? { kind: "saved" } : { kind: "timezone", value: detectedZone });
+      setAnchorIso(!isLegacyAustralia && storedAnchor ? storedAnchor : REGION_PROFILES[detectedRegion].anchorIso);
+      setLocationSource(storedRegionValue ? { kind: "saved" } : { kind: "timezone", value: detectedZone });
       setSelectedIso(nextToday);
       setViewYear(nextDate.getUTCFullYear());
       setViewMonth(nextDate.getUTCMonth());
@@ -823,7 +923,7 @@ export default function Home() {
             </label>
 
             <label>
-              <span>{mansionName(mansions[0], language)} · {copy.dayOneReference}</span>
+              <span>{skyMarkerName(mansions[0], language)} · {copy.dayOneReference}</span>
               <input
                 type="date"
                 value={anchorIso}
@@ -868,7 +968,7 @@ export default function Home() {
           <div className="alignment-strip">
             <span><b>⌖</b>{profileLabel(profile, language)}</span>
             <span><b>◷</b>{timeZone}</span>
-            <span><b>◇</b>{mansionName(mansions[0], language)} {copy.dayOne} · {formatShortDate(parseIsoDate(anchorIso), language)}</span>
+            <span><b>◇</b>{copy.dawnReference}: {skyMarkerName(mansions[0], language)} {copy.dayOne} · {formatShortDate(parseIsoDate(anchorIso), language)}</span>
             <span className={`connection-indicator ${!isOnline ? "offline" : offlineReady ? "ready" : ""}`}>
               <b>●</b>{!isOnline ? copy.offlineMode : offlineReady ? copy.offlineReady : copy.online}
             </span>
@@ -902,9 +1002,9 @@ export default function Home() {
                   <div className="mansion-name-cell" role="rowheader">
                     <span className="mansion-index">{formatNumber(row.mansionIndex + 1, language, 2)}</span>
                     <div>
-                      <strong>{mansionName(row.mansion, language)}</strong>
-                      <span className="alternate-name" lang={language === "ar" ? "en" : "ar"} dir={language === "ar" ? "ltr" : "rtl"}>
-                        {language === "ar" ? row.mansion.en : row.mansion.ar}
+                      <strong>{skyMarkerName(row.mansion, language)}</strong>
+                      <span className="traditional-name">
+                        {mansionName(row.mansion, language)} · {row.mansion.designation}
                       </span>
                       <small>{formatShortDate(row.startMs, language)} – {formatShortDate(row.startMs + (row.mansion.days - 1) * DAY_MS, language)}</small>
                     </div>
@@ -971,12 +1071,14 @@ export default function Home() {
               <span>{formatNumber(selectedDay.mansionIndex + 1, language, 2)}</span>
               <div>
                 <p>{profileLabel(profile, language)} {copy.regionMansion}</p>
-                <h3>{mansionName(selectedDay.mansion, language)}</h3>
+                <h3>{skyMarkerName(selectedDay.mansion, language)}</h3>
               </div>
-              <b lang={language === "ar" ? "en" : "ar"} dir={language === "ar" ? "ltr" : "rtl"}>
-                {language === "ar" ? selectedDay.mansion.en : selectedDay.mansion.ar}
-              </b>
+              <b dir="ltr">{selectedDay.mansion.designation}</b>
             </div>
+            <p className="sky-marker-meta">
+              <span><b>{copy.traditionalMansion}</b>{mansionName(selectedDay.mansion, language)}</span>
+              <span><b>{copy.constellation}</b>{constellationName(selectedDay.mansion, language)}</span>
+            </p>
             {selectedDay.mansion.localNote && (
               <p className="local-name-note">
                 {language === "ar" ? selectedDay.mansion.localNoteAr || selectedDay.mansion.localNote : selectedDay.mansion.localNote}
@@ -1011,13 +1113,15 @@ export default function Home() {
             <div className="equation">
               <span>{formatNumber(27, language)} × {formatNumber(13, language)}</span>
               <b>+</b>
-              <span>{language === "ar" ? "الجبهة" : "Al‑Jabha"} {formatNumber(14, language)}</span>
+              <span>{language === "ar" ? "جبهة الأسد · الجبهة" : "Leo Forehead · Al‑Jabha"} {formatNumber(14, language)}</span>
               <b>=</b>
               <strong>{formatNumber(365, language)} {language === "ar" ? "يومًا" : "days"}</strong>
             </div>
             <p>{copy.cycleExplanation}</p>
           </article>
         </section>
+
+        <p className="visibility-note"><span aria-hidden="true">✦</span>{copy.visibilityNote}</p>
 
         <section className={`outlook-card tone-${selectedOutlook.tone}`} aria-label={copy.outlookTitle} aria-live="polite">
           <div className="outlook-heading">
@@ -1026,7 +1130,7 @@ export default function Home() {
               <h2>{copy.outlookTitle}</h2>
             </div>
             <div className="outlook-badges">
-              <span>{mansionName(selectedDay.mansion, language)}</span>
+              <span>{skyMarkerName(selectedDay.mansion, language)}</span>
               <span>{copy.day} {formatNumber(selectedDay.dayInMansion, language)}/{formatNumber(selectedDay.mansion.days, language)}</span>
             </div>
           </div>
@@ -1058,10 +1162,8 @@ export default function Home() {
             <aside className="next-outlook">
               <small>{copy.nextMansion}</small>
               <div>
-                <strong>{mansionName(nextMansion, language)}</strong>
-                <b lang={language === "ar" ? "en" : "ar"} dir={language === "ar" ? "ltr" : "rtl"}>
-                  {language === "ar" ? nextMansion.en : nextMansion.ar}
-                </b>
+                <strong>{skyMarkerName(nextMansion, language)}</strong>
+                <b>{mansionName(nextMansion, language)}</b>
               </div>
               <span>{formatShortDate(selectedMansionEnd + DAY_MS, language)}</span>
               <p>{nextOutlook.title}</p>
@@ -1102,8 +1204,8 @@ function DateCell({
   const weekday = new Intl.DateTimeFormat(localeFor(language), { weekday: "short", timeZone: "UTC" }).format(date).toUpperCase();
   const month = new Intl.DateTimeFormat(localeFor(language), { month: "short", timeZone: "UTC" }).format(date).toUpperCase();
   const ariaLabel = language === "ar"
-    ? `${formatFullDate(day.dateMs, language)}، ${day.mansion.ar}، اليوم ${formatNumber(day.dayInMansion, language)} من المنزل`
-    : `${formatFullDate(day.dateMs, language)}, ${day.mansion.en}, mansion day ${day.dayInMansion}`;
+    ? `${formatFullDate(day.dateMs, language)}، ${day.mansion.starAr}، المنزل التقليدي ${day.mansion.ar}، اليوم ${formatNumber(day.dayInMansion, language)} من الفترة`
+    : `${formatFullDate(day.dateMs, language)}, ${day.mansion.starEn}, traditional mansion ${day.mansion.en}, period day ${day.dayInMansion}`;
 
   return (
     <button

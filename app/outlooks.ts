@@ -1,4 +1,10 @@
-export type OutlookRegionId = "gulf" | "sudan" | "australia" | "classical";
+export type OutlookRegionId =
+  | "gulf"
+  | "sudan"
+  | "australia_tropical"
+  | "australia_central"
+  | "australia_temperate"
+  | "classical";
 
 export type OutlookTone = "heat" | "humid" | "rain" | "cool" | "transition" | "neutral";
 
@@ -467,84 +473,152 @@ const SUDAN_OUTLOOKS: MansionOutlook[] = [
   },
 ];
 
-type AustraliaPhase = "lateSpring" | "summer" | "autumn" | "winter" | "spring";
+type AustraliaPhase = "lateAutumn" | "winter" | "spring" | "summer" | "autumn";
+type AustraliaZone = "tropical" | "central" | "temperate";
 
-const AUSTRALIA_PHASE_DETAILS: Record<
-  AustraliaPhase,
-  Omit<MansionOutlook, "season" | "title">
+const AUSTRALIA_PHASE_SEQUENCE: AustraliaPhase[] = [
+  "lateAutumn", "lateAutumn",
+  "winter", "winter", "winter", "winter", "winter", "winter",
+  "spring", "spring", "spring", "spring", "spring", "spring", "spring",
+  "summer", "summer", "summer", "summer", "summer", "summer", "summer",
+  "autumn", "autumn", "autumn", "autumn", "autumn", "lateAutumn",
+];
+
+const AUSTRALIA_ZONE_DETAILS: Record<
+  AustraliaZone,
+  Record<AustraliaPhase, MansionOutlook>
 > = {
-  lateSpring: {
-    air: "Temperatures rise across southern and inland Australia, while humidity and thunderstorm activity build across the tropical north.",
-    land: "Vegetation dries quickly in many southern districts as northern soils receive increasingly uneven storm rain.",
-    guidance: "Follow local heat, fire-weather, storm and flood advice; Australian conditions differ sharply by climate zone.",
-    tone: "transition",
+  tropical: {
+    lateAutumn: {
+      season: "Early dry season",
+      title: "Humidity eases and the dry season settles",
+      air: "Rain and humidity usually decline across the tropical north, with clearer days and cooler nights becoming more frequent.",
+      land: "Wet-season water can remain in floodplains while roads and soils gradually firm.",
+      guidance: "Check local access and river conditions; residual flooding can outlast the rain.",
+      tone: "transition",
+    },
+    winter: {
+      season: "Tropical dry season",
+      title: "Dry air, clear skies and mild nights",
+      air: "Rain is generally scarce, humidity is lower and southeast trade winds can bring comfortable nights.",
+      land: "Surface water and soil moisture steadily decline as grasses cure.",
+      guidance: "Monitor water reserves and local fire restrictions as the dry season advances.",
+      tone: "cool",
+    },
+    spring: {
+      season: "Build-up season",
+      title: "Heat and humidity build before the wet",
+      air: "Very hot conditions, rising humidity and increasingly frequent thunderstorms mark the pre-monsoon build-up.",
+      land: "Dry fuels remain vulnerable before storms become dependable; intense first rain can run off hard ground.",
+      guidance: "Follow heat, fire, lightning and severe-thunderstorm warnings.",
+      tone: "heat",
+    },
+    summer: {
+      season: "Tropical wet season",
+      title: "Monsoon rain and cyclone risk",
+      air: "Humid weather, thunderstorms, monsoon bursts and tropical cyclones can produce prolonged heavy rain.",
+      land: "Flooding, saturated ground and disrupted access can develop quickly.",
+      guidance: "Use official cyclone, flood and severe-weather warnings for every decision.",
+      tone: "rain",
+    },
+    autumn: {
+      season: "Late wet season",
+      title: "The wet season retreats unevenly",
+      air: "Humid spells, thunderstorms and tropical systems remain possible while longer dry intervals begin.",
+      land: "Floodplains and waterways can remain high even as rainfall becomes less regular.",
+      guidance: "Do not treat a short dry spell as the end of flood or cyclone risk.",
+      tone: "humid",
+    },
   },
-  summer: {
-    air: "Hot spells and severe fire weather are possible across the south and interior, while the tropical north is in its humid wet-season pattern.",
-    land: "Heat and evaporation stress dry districts; heavy northern rain can produce rapid runoff and flooding.",
-    guidance: "Use Bureau of Meteorology warnings for heat, fire, thunderstorms, tropical cyclones and floods rather than the calendar alone.",
-    tone: "heat",
+  central: {
+    lateAutumn: {
+      season: "Late autumn · arid interior",
+      title: "Dry days and colder desert nights",
+      air: "Daytime heat generally eases while clear skies allow strong overnight cooling across the interior.",
+      land: "Dry soils lose heat rapidly after sunset; water availability remains highly local.",
+      guidance: "Prepare for large day–night temperature ranges and check remote-area conditions.",
+      tone: "transition",
+    },
+    winter: {
+      season: "Interior winter",
+      title: "Cool days, cold nights and frost pockets",
+      air: "Dry, sunny days often alternate with cold nights; frost is possible in exposed inland districts.",
+      land: "Growth is limited without recent rain, and frost can affect sensitive plants and water systems.",
+      guidance: "Carry cold-weather supplies for remote travel and protect frost-sensitive plants.",
+      tone: "cool",
+    },
+    spring: {
+      season: "Interior spring",
+      title: "Rapid warming, wind and dust",
+      air: "Temperatures climb quickly, with gusty winds, dust and an increasing chance of dry thunderstorms.",
+      land: "Vegetation response depends on earlier rain; exposed ground and cured fuels dry rapidly.",
+      guidance: "Monitor heat, wind and fire-weather warnings before travel or field work.",
+      tone: "transition",
+    },
+    summer: {
+      season: "Hot interior summer",
+      title: "Extreme heat with irregular storm rain",
+      air: "Long heat spells dominate, interrupted in some areas by thunderstorms and locally intense rain.",
+      land: "Evaporation is severe, while sudden runoff can flood normally dry channels.",
+      guidance: "Plan for heat and water security, and never enter flooded roads or creek crossings.",
+      tone: "heat",
+    },
+    autumn: {
+      season: "Interior autumn",
+      title: "Heat eases but rainfall remains irregular",
+      air: "Hot spells become less persistent and nights cool, though storms can still occur.",
+      land: "Pasture and water conditions remain determined by highly uneven recent rainfall.",
+      guidance: "Base grazing and travel decisions on measured local rain and current road reports.",
+      tone: "transition",
+    },
   },
-  autumn: {
-    air: "Southern temperatures generally ease as the tropical wet season gradually retreats, though heat, storms or flooding can persist.",
-    land: "Cooling helps southern soils retain moisture; northern access and ground conditions depend on the timing of the wet-season withdrawal.",
-    guidance: "Adjust field work to observed rainfall and local warnings; do not assume one national seasonal pattern.",
-    tone: "transition",
-  },
-  winter: {
-    air: "Cool changes, cold nights and frost affect southern and inland districts, while northern Australia is mainly in its dry season.",
-    land: "Southern rainfall and frost exposure vary by coast and elevation; northern fuels and soils progressively dry.",
-    guidance: "Protect frost-sensitive plants in exposed districts and monitor local rain, wind and fire-weather information.",
-    tone: "cool",
-  },
-  spring: {
-    air: "Temperatures and wind variability increase; southern fire weather can strengthen while northern humidity begins its seasonal build-up.",
-    land: "Growth accelerates where moisture remains, but drying fuels and early northern storms create contrasting risks.",
-    guidance: "Review water, fire and storm plans and use local forecasts for timing outdoor work.",
-    tone: "transition",
+  temperate: {
+    lateAutumn: {
+      season: "Temperate late autumn",
+      title: "Cooler days and longer nights",
+      air: "Cold fronts become more influential, with cooler nights, rain and wind varying by coast and elevation.",
+      land: "Soils can retain moisture longer while frost exposure increases inland.",
+      guidance: "Prepare frost-sensitive plants and follow local wind and rain forecasts.",
+      tone: "cool",
+    },
+    winter: {
+      season: "Temperate winter",
+      title: "Cold fronts, frost and alpine snow",
+      air: "Cool days and cold nights dominate; fronts bring rain, strong winds and snow in alpine districts.",
+      land: "Waterlogging, frost or snow affect exposed areas, while rainfall varies greatly east to west.",
+      guidance: "Use local frost, marine, wind and alpine warnings rather than this calendar alone.",
+      tone: "cool",
+    },
+    spring: {
+      season: "Temperate spring",
+      title: "Fast warming and changeable weather",
+      air: "Warm spells, cold changes, wind and thunderstorms can alternate rapidly.",
+      land: "Growth accelerates where moisture persists, while grass and forest fuels begin drying.",
+      guidance: "Review frost, thunderstorm and fire-weather information before outdoor work.",
+      tone: "transition",
+    },
+    summer: {
+      season: "Temperate summer",
+      title: "Heatwaves and severe fire weather",
+      air: "Hot spells, dry winds and thunderstorms can be followed by sharp cool changes.",
+      land: "Vegetation and soils dry quickly; lightning and wind can increase fire danger.",
+      guidance: "Follow official heatwave, bushfire and severe-thunderstorm warnings.",
+      tone: "heat",
+    },
+    autumn: {
+      season: "Temperate autumn",
+      title: "Milder days with an uneven seasonal break",
+      air: "Temperatures generally ease, though late heat, dry spells and strong fronts remain possible.",
+      land: "The timing of useful autumn rain differs greatly among southern farming and coastal districts.",
+      guidance: "Use measured rainfall and local forecasts when timing sowing or field work.",
+      tone: "transition",
+    },
   },
 };
 
-const AUSTRALIA_PHASES: Array<
-  [season: string, title: string, phase: AustraliaPhase]
-> = [
-  ["Late spring", "Southern warmth and northern build-up", "lateSpring"],
-  ["Late spring", "Summer conditions gather", "lateSpring"],
-  ["Early summer", "Heat expands as the tropical wet season develops", "summer"],
-  ["Early summer · December solstice", "Long days and active summer hazards", "summer"],
-  ["Midsummer", "Peak heat and northern monsoon risk", "summer"],
-  ["Midsummer", "Warm nights and humid northern weather", "summer"],
-  ["Late summer", "Heat persists across much of the continent", "summer"],
-  ["Late summer", "Tropical rain and southern heat remain active", "summer"],
-  ["Summer–autumn transition", "The seasonal turn begins unevenly", "summer"],
-  ["Early autumn · Al-Jabha", "Fourteen-day autumn transition", "autumn"],
-  ["Early autumn", "Southern cooling slowly advances", "autumn"],
-  ["Mid-autumn", "Milder southern days and a retreating wet season", "autumn"],
-  ["Mid-autumn", "Cooling nights become more established", "autumn"],
-  ["Late autumn", "Winter signals strengthen in the south", "autumn"],
-  ["Late autumn", "The dry-season pattern expands in the north", "autumn"],
-  ["Winter threshold", "Colder southern nights arrive", "autumn"],
-  ["Early winter", "Cool changes and northern dry weather", "winter"],
-  ["Midwinter · June solstice", "Shortest days and stronger cold exposure", "winter"],
-  ["Midwinter", "Cold nights, frost and southern fronts", "winter"],
-  ["Midwinter", "Winter conditions remain established", "winter"],
-  ["Late winter", "Cold persists while daylight increases", "winter"],
-  ["Late winter", "The first spring variability appears", "winter"],
-  ["Winter–spring transition", "Warming begins with changeable winds", "winter"],
-  ["Early spring", "Growth and drying accelerate together", "spring"],
-  ["Spring · September equinox", "Rapid seasonal change across Australia", "spring"],
-  ["Mid-spring", "Warmer days and stronger regional contrasts", "spring"],
-  ["Mid-spring", "Fire and thunderstorm risks begin to build", "spring"],
-  ["Late spring", "The cycle closes in the pre-summer build-up", "spring"],
-];
-
-const AUSTRALIA_OUTLOOKS: MansionOutlook[] = AUSTRALIA_PHASES.map(
-  ([season, title, phase]) => ({
-    season,
-    title,
-    ...AUSTRALIA_PHASE_DETAILS[phase],
-  }),
-);
+function australiaOutlooks(zone: AustraliaZone): MansionOutlook[] {
+  return AUSTRALIA_PHASE_SEQUENCE.map((phase) => AUSTRALIA_ZONE_DETAILS[zone][phase]);
+}
 
 const CLASSICAL_OUTLOOKS: MansionOutlook[] = Array.from({ length: 28 }, () => ({
   season: "Classical reference profile",
@@ -558,7 +632,9 @@ const CLASSICAL_OUTLOOKS: MansionOutlook[] = Array.from({ length: 28 }, () => ({
 export const OUTLOOKS: Record<OutlookRegionId, MansionOutlook[]> = {
   gulf: GULF_OUTLOOKS,
   sudan: SUDAN_OUTLOOKS,
-  australia: AUSTRALIA_OUTLOOKS,
+  australia_tropical: australiaOutlooks("tropical"),
+  australia_central: australiaOutlooks("central"),
+  australia_temperate: australiaOutlooks("temperate"),
   classical: CLASSICAL_OUTLOOKS,
 };
 

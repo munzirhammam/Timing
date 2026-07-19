@@ -1,17 +1,39 @@
-# Lunar Mansion Calendar
+# Seasonal Star Calendar
 
-An interactive bilingual regional lunar-mansion calendar with a 365-day cycle,
-regional alignments, seasonal outlooks, and offline support.
+An interactive bilingual calendar of 28 sky markers with a fixed 365-day cycle,
+regional dawn alignments, local seasonal outlooks, and offline support. The
+international star or asterism label is primary; the historical Arabic lunar
+mansion is retained as a secondary reference.
 
 ## Australia alignment
 
-The Australia profile preserves the complete mansion sequence: 27 mansions at
-13 days and Al-Jabha at 14 days, totalling 365 days. Its seasonal phase is moved
-14 mansion boundaries (183 days) from the Arabian Gulf reference, placing
-Al-Sharatain day 1 on 11 November 2026. This is an explicit Southern Hemisphere
-seasonal adaptation, not a claim of a historical Australian Arabic mansion
-tradition. Automatic detection uses the device's Australian IANA time zone for
-the local date boundary.
+Australia has three selectable profiles because tropical, arid/subtropical and
+temperate conditions differ greatly across the continent:
+
+- **Tropical North** — day 1 on 13 May 2026, referenced to Darwin
+- **Subtropical & Central** — day 1 on 14 May 2026, referenced to Alice Springs
+- **Temperate South** — day 1 on 17 May 2026, referenced to latitude 35° south
+
+Each date is a reproducible approximation of the traditional first dawn
+appearance of the Sheratan–Mesarthim marker: the marker is rising through 5°
+altitude while the Sun is at or below −12°. Clouds, terrain, twilight, light
+pollution and exact coordinates affect actual visibility, so the app does not
+claim that a marker will be visible from every place on every date. The manual
+day-one control allows local correction.
+
+All three profiles preserve the complete cycle: 27 stations at 13 days and the
+Leo Forehead station (traditional Al-Jabha) at 14 days, totalling 365 days. The
+labels use internationally recognized stars, catalog designations and
+constellations. No Indigenous star names are used.
+
+The historical mapping follows the 28-station table in Roland Laffitte's study
+of Arabian *anwā’* calendars, while the regional division follows the Australian
+Bureau of Meteorology's broad tropical, subtropical and temperate climate-zone
+framework:
+
+- <https://uranos.fr/wp-content/uploads/2024/04/ETUDES_03_D09.pdf>
+- <https://www.raco.cat/index.php/Suhayl/article/download/200202/267667/>
+- <https://www.bom.gov.au/resources/learn-and-explore/climate-knowledge-centre/australian-climate-zones>
 
 - Live on GitHub Pages: <https://munzirhammam.github.io/Timing/>
 - Source repository: <https://github.com/munzirhammam/Timing>
