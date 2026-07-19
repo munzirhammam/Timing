@@ -1,0 +1,31 @@
+{
+  "name": "Regional Lunar Mansion Calendar · تقويم المنازل القمرية الإقليمي",
+  "short_name": "Lunar Mansions · المنازل",
+  "description": "A bilingual regional 365-day lunar-mansion calendar and traditional seasonal outlook. تقويم إقليمي ثنائي اللغة للمنازل القمرية.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#030914",
+  "theme_color": "#030914",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
