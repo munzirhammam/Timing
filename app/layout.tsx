@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lunar Mansion Cylinder",
+  title: "Lunar Mansion Calendar",
   description:
-    "An interactive 365-day cylinder of the 28 Arabic lunar mansions with Gregorian month overlays.",
+    "An interactive monthly calendar of the 28 Arabic lunar mansions with 13 mansion-day columns and Gregorian dates.",
   other: {
     "codex-preview": "development",
   },

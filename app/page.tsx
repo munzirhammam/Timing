@@ -1,7 +1,6 @@
 "use client";
 
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
 type Mansion = {
   en: string;
@@ -9,22 +8,25 @@ type Mansion = {
   days: number;
 };
 
-type CylinderDay = {
-  angle: number;
+type MansionDate = {
   cycleDay: number;
+  cycleYear: number;
   dateIso: string;
   dateMs: number;
   dayInMansion: number;
-  isMonthStart: boolean;
   mansion: Mansion;
   mansionIndex: number;
-  month: number;
-  rowY: number;
+};
+
+type MansionRow = {
+  cycleYear: number;
+  dates: MansionDate[];
+  mansion: Mansion;
+  mansionIndex: number;
+  startMs: number;
 };
 
 const DAY_MS = 86_400_000;
-const ROW_HEIGHT = 19;
-const CYLINDER_RADIUS = 252;
 const DEFAULT_ANCHOR = "2026-04-05";
 
 const MANSIONS: Mansion[] = [
@@ -58,20 +60,9 @@ const MANSIONS: Mansion[] = [
   { en: "Batn Al-Hut", ar: "بطن الحوت", days: 13 },
 ];
 
-const MONTH_COLORS = [
-  "rgba(111, 139, 167, .17)",
-  "rgba(146, 158, 181, .13)",
-  "rgba(91, 128, 148, .17)",
-  "rgba(148, 138, 116, .14)",
-  "rgba(99, 139, 128, .16)",
-  "rgba(151, 127, 96, .15)",
-  "rgba(111, 132, 160, .18)",
-  "rgba(121, 116, 152, .15)",
-  "rgba(145, 123, 104, .16)",
-  "rgba(95, 128, 145, .17)",
-  "rgba(121, 131, 155, .14)",
-  "rgba(153, 153, 162, .13)",
-];
+const MANSION_OFFSETS = MANSIONS.map((_, mansionIndex) =>
+  MANSIONS.slice(0, mansionIndex).reduce((sum, mansion) => sum + mansion.days, 0),
+);
 
 function parseIsoDate(value: string) {
   const [year, month, day] = value.split("-").map(Number);
@@ -90,20 +81,6 @@ function localTodayIso() {
   return `${year}-${month}-${day}`;
 }
 
-function formatDate(value: number, compact = false) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: compact ? "short" : "long",
-    timeZone: "UTC",
-    year: "numeric",
-  }).format(new Date(value));
-}
-
-function formatRange(start: number) {
-  const end = start + 364 * DAY_MS;
-  return `${formatDate(start, true)} — ${formatDate(end, true)}`;
-}
-
 function cycleStartForYear(cycleYear: number, anchorIso: string) {
   const anchorYear = Number(anchorIso.slice(0, 4));
   return parseIsoDate(anchorIso) + (cycleYear - anchorYear) * 365 * DAY_MS;
@@ -114,138 +91,153 @@ function cycleYearForDate(dateMs: number, anchorIso: string) {
   return anchorYear + Math.floor((dateMs - parseIsoDate(anchorIso)) / (365 * DAY_MS));
 }
 
-function dayPlacement(dayOffset: number) {
-  let remaining = dayOffset;
-  for (let index = 0; index < MANSIONS.length; index += 1) {
-    if (remaining < MANSIONS[index].days) {
+function mansionDateForDate(dateMs: number, anchorIso: string): MansionDate {
+  const cycleYear = cycleYearForDate(dateMs, anchorIso);
+  const cycleStart = cycleStartForYear(cycleYear, anchorIso);
+  const cycleDay = Math.floor((dateMs - cycleStart) / DAY_MS) + 1;
+  let remaining = cycleDay - 1;
+
+  for (let mansionIndex = 0; mansionIndex < MANSIONS.length; mansionIndex += 1) {
+    const mansion = MANSIONS[mansionIndex];
+    if (remaining < mansion.days) {
       return {
-        angle: (remaining / MANSIONS[index].days) * 360,
+        cycleDay,
+        cycleYear,
+        dateIso: toIsoDate(dateMs),
+        dateMs,
         dayInMansion: remaining + 1,
-        mansionIndex: index,
+        mansion,
+        mansionIndex,
       };
     }
-    remaining -= MANSIONS[index].days;
+    remaining -= mansion.days;
   }
-  return { angle: 0, dayInMansion: 1, mansionIndex: 0 };
+
+  return {
+    cycleDay: 1,
+    cycleYear,
+    dateIso: toIsoDate(dateMs),
+    dateMs,
+    dayInMansion: 1,
+    mansion: MANSIONS[0],
+    mansionIndex: 0,
+  };
+}
+
+function formatFullDate(dateMs: number) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "long",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(dateMs));
+}
+
+function formatShortDate(dateMs: number) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(dateMs));
+}
+
+function monthValue(year: number, month: number) {
+  return `${year}-${String(month + 1).padStart(2, "0")}`;
 }
 
 const INITIAL_TODAY_ISO = localTodayIso();
 const INITIAL_TODAY_MS = parseIsoDate(INITIAL_TODAY_ISO);
-const INITIAL_CYCLE_YEAR = cycleYearForDate(INITIAL_TODAY_MS, DEFAULT_ANCHOR);
-const INITIAL_CYCLE_START = cycleStartForYear(INITIAL_CYCLE_YEAR, DEFAULT_ANCHOR);
-const INITIAL_PLACEMENT = dayPlacement(
-  Math.floor((INITIAL_TODAY_MS - INITIAL_CYCLE_START) / DAY_MS),
-);
+const INITIAL_TODAY = new Date(INITIAL_TODAY_MS);
 
 export default function Home() {
   const [anchorIso, setAnchorIso] = useState(DEFAULT_ANCHOR);
-  const [cycleYear, setCycleYear] = useState(INITIAL_CYCLE_YEAR);
-  const [rotation, setRotation] = useState(-INITIAL_PLACEMENT.angle);
-  const [selectedIso, setSelectedIso] = useState(INITIAL_TODAY_ISO);
   const [todayIso] = useState(INITIAL_TODAY_ISO);
+  const [selectedIso, setSelectedIso] = useState(INITIAL_TODAY_ISO);
+  const [viewYear, setViewYear] = useState(INITIAL_TODAY.getUTCFullYear());
+  const [viewMonth, setViewMonth] = useState(INITIAL_TODAY.getUTCMonth());
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const dragState = useRef({
-    moved: false,
-    pointerId: 0,
-    startDate: "",
-    startRotation: 0,
-    startX: 0,
-  });
 
-  const cycleStart = useMemo(
-    () => cycleStartForYear(cycleYear, anchorIso),
-    [anchorIso, cycleYear],
-  );
+  const monthStart = Date.UTC(viewYear, viewMonth, 1);
+  const monthEnd = Date.UTC(viewYear, viewMonth + 1, 0);
 
-  const days = useMemo(() => {
-    const result: CylinderDay[] = [];
-    let cycleDay = 1;
+  const rows = useMemo(() => {
+    const rowKeys: string[] = [];
+    const rowLookup = new Map<string, { cycleYear: number; mansionIndex: number }>();
 
-    MANSIONS.forEach((mansion, mansionIndex) => {
-      const rowY = (mansionIndex - (MANSIONS.length - 1) / 2) * ROW_HEIGHT;
-      for (let dayInMansion = 1; dayInMansion <= mansion.days; dayInMansion += 1) {
-        const dateMs = cycleStart + (cycleDay - 1) * DAY_MS;
-        const date = new Date(dateMs);
-        result.push({
-          angle: ((dayInMansion - 1) / mansion.days) * 360,
-          cycleDay,
-          dateIso: toIsoDate(dateMs),
-          dateMs,
-          dayInMansion,
-          isMonthStart: date.getUTCDate() === 1 || cycleDay === 1,
-          mansion,
-          mansionIndex,
-          month: date.getUTCMonth(),
-          rowY,
-        });
-        cycleDay += 1;
+    for (let dateMs = monthStart; dateMs <= monthEnd; dateMs += DAY_MS) {
+      const info = mansionDateForDate(dateMs, anchorIso);
+      const key = `${info.cycleYear}-${info.mansionIndex}`;
+      if (!rowLookup.has(key)) {
+        rowKeys.push(key);
+        rowLookup.set(key, { cycleYear: info.cycleYear, mansionIndex: info.mansionIndex });
       }
+    }
+
+    return rowKeys.map((key): MansionRow => {
+      const rowInfo = rowLookup.get(key)!;
+      const mansion = MANSIONS[rowInfo.mansionIndex];
+      const startMs =
+        cycleStartForYear(rowInfo.cycleYear, anchorIso) +
+        MANSION_OFFSETS[rowInfo.mansionIndex] * DAY_MS;
+      return {
+        cycleYear: rowInfo.cycleYear,
+        dates: Array.from({ length: mansion.days }, (_, index) =>
+          mansionDateForDate(startMs + index * DAY_MS, anchorIso),
+        ),
+        mansion,
+        mansionIndex: rowInfo.mansionIndex,
+        startMs,
+      };
     });
-    return result;
-  }, [cycleStart]);
+  }, [anchorIso, monthEnd, monthStart]);
 
-  const selectedDay = useMemo(
-    () => days.find((day) => day.dateIso === selectedIso) ?? days[0],
-    [days, selectedIso],
-  );
+  const selectedDateMs = parseIsoDate(selectedIso);
+  const selectedDay = mansionDateForDate(selectedDateMs, anchorIso);
+  const selectedMansionStart =
+    cycleStartForYear(selectedDay.cycleYear, anchorIso) +
+    MANSION_OFFSETS[selectedDay.mansionIndex] * DAY_MS;
+  const selectedMansionEnd =
+    selectedMansionStart + (selectedDay.mansion.days - 1) * DAY_MS;
+  const selectedCycleStart = cycleStartForYear(selectedDay.cycleYear, anchorIso);
+  const selectedCycleEnd = selectedCycleStart + 364 * DAY_MS;
 
-  function selectDay(day: CylinderDay) {
-    setSelectedIso(day.dateIso);
-    setRotation(-day.angle);
+  const monthTitle = new Intl.DateTimeFormat("en-GB", {
+    month: "long",
+    timeZone: "UTC",
+    year: "numeric",
+  }).format(new Date(monthStart));
+
+  function selectDate(dateIso: string) {
+    const date = new Date(parseIsoDate(dateIso));
+    setSelectedIso(dateIso);
+    if (date.getUTCFullYear() !== viewYear || date.getUTCMonth() !== viewMonth) {
+      setViewYear(date.getUTCFullYear());
+      setViewMonth(date.getUTCMonth());
+    }
+  }
+
+  function moveMonth(amount: number) {
+    const next = new Date(Date.UTC(viewYear, viewMonth + amount, 1));
+    setViewYear(next.getUTCFullYear());
+    setViewMonth(next.getUTCMonth());
+    setSelectedIso(toIsoDate(next.getTime()));
   }
 
   function goToToday() {
-    if (!todayIso) return;
-    const todayMs = parseIsoDate(todayIso);
-    const nextCycleYear = cycleYearForDate(todayMs, anchorIso);
-    const nextStart = cycleStartForYear(nextCycleYear, anchorIso);
-    const offset = Math.floor((todayMs - nextStart) / DAY_MS);
-    const placement = dayPlacement(offset);
-    setCycleYear(nextCycleYear);
+    const today = new Date(parseIsoDate(todayIso));
+    setViewYear(today.getUTCFullYear());
+    setViewMonth(today.getUTCMonth());
     setSelectedIso(todayIso);
-    setRotation(-placement.angle);
   }
 
-  function changeCycleYear(nextYear: number) {
-    setCycleYear(nextYear);
-    setSelectedIso(toIsoDate(cycleStartForYear(nextYear, anchorIso)));
-    setRotation(0);
+  function setMonthFromValue(value: string) {
+    if (!value) return;
+    const [year, month] = value.split("-").map(Number);
+    setViewYear(year);
+    setViewMonth(month - 1);
+    setSelectedIso(`${value}-01`);
   }
-
-  function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    const target = event.target as HTMLElement;
-    const dateButton = target.closest<HTMLButtonElement>("[data-cylinder-date]");
-    dragState.current = {
-      moved: false,
-      pointerId: event.pointerId,
-      startDate: dateButton?.dataset.cylinderDate ?? "",
-      startX: event.clientX,
-      startRotation: rotation,
-    };
-    setDragging(true);
-  }
-
-  function onPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
-    if (!dragging || dragState.current.pointerId !== event.pointerId) return;
-    const distance = event.clientX - dragState.current.startX;
-    if (Math.abs(distance) > 4) dragState.current.moved = true;
-    setRotation(dragState.current.startRotation + distance * 0.42);
-  }
-
-  function stopDragging(event: ReactPointerEvent<HTMLDivElement>) {
-    if (dragState.current.pointerId !== event.pointerId) return;
-    if (!dragState.current.moved && dragState.current.startDate) {
-      const day = days.find((item) => item.dateIso === dragState.current.startDate);
-      if (day) selectDay(day);
-    }
-    setDragging(false);
-  }
-
-  const selectedMonth = new Intl.DateTimeFormat("en-GB", {
-    month: "long",
-    timeZone: "UTC",
-  }).format(new Date(selectedDay.dateMs));
 
   return (
     <main className="app-shell">
@@ -253,33 +245,15 @@ export default function Home() {
 
       <header className="topbar">
         <div className="brand">
-          <div className="moon-mark" aria-hidden="true">
-            <span />
-          </div>
+          <div className="moon-mark" aria-hidden="true"><span /></div>
           <div>
-            <h1>Lunar Mansion Cylinder</h1>
-            <p>28 stellar mansions · one continuous solar cycle</p>
+            <h1>Lunar Mansion Calendar</h1>
+            <p>13-day mansion weeks · Gregorian calendar months</p>
           </div>
         </div>
 
         <div className="top-actions">
-          <label className="year-control">
-            <span>Cycle</span>
-            <select
-              aria-label="Mansion cycle year"
-              value={cycleYear}
-              onChange={(event) => changeCycleYear(Number(event.target.value))}
-            >
-              {Array.from({ length: 21 }, (_, index) => 2016 + index).map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button className="today-button" type="button" onClick={goToToday}>
-            Today
-          </button>
+          <button className="today-button" type="button" onClick={goToToday}>Today</button>
           <button
             className={`settings-button ${settingsOpen ? "active" : ""}`}
             type="button"
@@ -298,9 +272,7 @@ export default function Home() {
                 <p className="eyebrow">Reference point</p>
                 <h2>Cycle alignment</h2>
               </div>
-              <button type="button" onClick={() => setSettingsOpen(false)} aria-label="Close settings">
-                ×
-              </button>
+              <button type="button" onClick={() => setSettingsOpen(false)} aria-label="Close settings">×</button>
             </div>
             <label>
               <span>Al‑Sharatain · Day 1</span>
@@ -308,35 +280,18 @@ export default function Home() {
                 type="date"
                 value={anchorIso}
                 onChange={(event) => {
-                  if (!event.currentTarget.value) return;
-                  setAnchorIso(event.currentTarget.value);
-                  setCycleYear(Number(event.currentTarget.value.slice(0, 4)));
-                  setSelectedIso(event.currentTarget.value);
-                  setRotation(0);
+                  if (event.currentTarget.value) setAnchorIso(event.currentTarget.value);
                 }}
                 onInput={(event) => {
-                  if (!event.currentTarget.value) return;
-                  setAnchorIso(event.currentTarget.value);
-                  setCycleYear(Number(event.currentTarget.value.slice(0, 4)));
-                  setSelectedIso(event.currentTarget.value);
-                  setRotation(0);
+                  if (event.currentTarget.value) setAnchorIso(event.currentTarget.value);
                 }}
               />
             </label>
             <p>
-              This reference anchors the stellar cycle. Every following cycle is exactly 365 days;
-              Gregorian leap days are not inserted into the mansion count.
+              The mansion cycle remains exactly 365 days. Gregorian leap days shift the month overlay;
+              they are not added to a mansion week.
             </p>
-            <button
-              className="reset-button"
-              type="button"
-              onClick={() => {
-                setAnchorIso(DEFAULT_ANCHOR);
-                setCycleYear(2026);
-                setSelectedIso(DEFAULT_ANCHOR);
-                setRotation(0);
-              }}
-            >
+            <button className="reset-button" type="button" onClick={() => setAnchorIso(DEFAULT_ANCHOR)}>
               Reset reference
             </button>
           </section>
@@ -344,160 +299,182 @@ export default function Home() {
       </header>
 
       <section className="workspace">
-        <section className="instrument-panel" aria-label="Interactive lunar mansion cylinder">
-          <div className="instrument-heading">
-            <div>
-              <p className="eyebrow">Mansion cycle {cycleYear}</p>
-              <h2>{formatRange(cycleStart)}</h2>
+        <section className="calendar-card" aria-label="Interactive lunar mansion calendar">
+          <div className="calendar-toolbar">
+            <button type="button" className="month-arrow" aria-label="Previous month" onClick={() => moveMonth(-1)}>‹</button>
+            <div className="month-heading">
+              <p className="eyebrow">Gregorian month</p>
+              <h2>{monthTitle}</h2>
+              <span>{rows.length} mansion weeks intersect this month</span>
             </div>
-            <div className="cycle-count">
-              <strong>365</strong>
-              <span>days</span>
-            </div>
-          </div>
-
-          <div
-            className={`cylinder-stage ${dragging ? "dragging" : ""}`}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={stopDragging}
-            onPointerCancel={stopDragging}
-          >
-            <div className="celestial-orbit orbit-one" aria-hidden="true" />
-            <div className="celestial-orbit orbit-two" aria-hidden="true" />
-            <div
-              className="cylinder-rotor"
-              style={{ "--rotation": `${rotation}deg` } as CSSProperties}
-            >
-              <div className="cylinder-cap top-cap" aria-hidden="true">
-                <span>28 Mansions</span>
-              </div>
-              <div className="cylinder-cap bottom-cap" aria-hidden="true" />
-
-              {days.map((day) => {
-                const width = (2 * Math.PI * CYLINDER_RADIUS) / day.mansion.days - 2.4;
-                const isSelected = selectedIso === day.dateIso;
-                const isToday = todayIso === day.dateIso;
-                const monthName = new Intl.DateTimeFormat("en-GB", {
-                  month: "short",
-                  timeZone: "UTC",
-                })
-                  .format(new Date(day.dateMs))
-                  .toUpperCase();
-                const style = {
-                  "--angle": `${day.angle}deg`,
-                  "--cell-width": `${width}px`,
-                  "--month-color": MONTH_COLORS[day.month],
-                  "--radius": `${CYLINDER_RADIUS}px`,
-                  "--row-y": `${day.rowY}px`,
-                } as CSSProperties;
-
-                return (
-                  <button
-                    className={`cylinder-cell ${day.isMonthStart ? "month-start" : ""} ${
-                      day.mansion.days === 14 ? "jabha-cell" : ""
-                    } ${isSelected ? "selected" : ""} ${isToday ? "today" : ""}`}
-                    key={day.dateIso}
-                    data-cylinder-date={day.dateIso}
-                    style={style}
-                    type="button"
-                    title={`${formatDate(day.dateMs)} · ${day.mansion.en} · day ${day.dayInMansion}`}
-                    aria-label={`${formatDate(day.dateMs)}, ${day.mansion.en}, day ${day.dayInMansion} of ${day.mansion.days}`}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      selectDay(day);
-                    }}
-                  >
-                    {day.dayInMansion === 1 && (
-                      <span className="mansion-tag">
-                        <b>{String(day.mansionIndex + 1).padStart(2, "0")}</b>
-                        {day.mansion.en}
-                      </span>
-                    )}
-                    {day.isMonthStart && <span className="month-tag">{monthName}</span>}
-                    <span className="day-number">{day.dayInMansion}</span>
-                    {isToday && <span className="today-star" aria-hidden="true">✦</span>}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="front-indicator" aria-hidden="true">
-              <span />
-            </div>
-            <p className="drag-hint"><span>↔</span> Drag the cylinder to rotate</p>
-          </div>
-
-          <div className="instrument-footer">
-            <span>Stellar year · 365 days</span>
-            <i />
-            <strong>27 × 13 + Al‑Jabha 14 = 365</strong>
-            <i />
-            <span>Gregorian months overlaid</span>
-          </div>
-        </section>
-
-        <aside className="detail-panel" aria-live="polite">
-          <section className="selected-date">
-            <p className="eyebrow">{selectedIso === todayIso ? "Today" : "Selected date"}</p>
-            <h2>{formatDate(selectedDay.dateMs)}</h2>
-            <label className="date-jump">
-              <span>Choose date in this cycle</span>
+            <button type="button" className="month-arrow" aria-label="Next month" onClick={() => moveMonth(1)}>›</button>
+            <label className="month-picker">
+              <span>Jump to month</span>
               <input
-                type="date"
-                min={toIsoDate(cycleStart)}
-                max={toIsoDate(cycleStart + 364 * DAY_MS)}
-                value={selectedIso}
-                onChange={(event) => {
-                  const day = days.find((item) => item.dateIso === event.currentTarget.value);
-                  if (day) selectDay(day);
-                }}
-                onInput={(event) => {
-                  const day = days.find((item) => item.dateIso === event.currentTarget.value);
-                  if (day) selectDay(day);
-                }}
+                type="month"
+                value={monthValue(viewYear, viewMonth)}
+                onChange={(event) => setMonthFromValue(event.currentTarget.value)}
+                onInput={(event) => setMonthFromValue(event.currentTarget.value)}
               />
             </label>
-          </section>
+          </div>
 
-          <section className="mansion-detail">
-            <p>Mansion week</p>
-            <div className="mansion-title-row">
-              <span>{String(selectedDay.mansionIndex + 1).padStart(2, "0")}</span>
-              <h3>{selectedDay.mansion.en}</h3>
+          <div className="calendar-scroll">
+            <div className="mansion-calendar" role="table" aria-label={`${monthTitle} by mansion day`}>
+              <div className="calendar-header" role="row">
+                <div className="mansion-column-head" role="columnheader">
+                  <span>Week</span>
+                  <strong>Lunar mansion</strong>
+                </div>
+                {Array.from({ length: 13 }, (_, index) => (
+                  <div className="day-column-head" role="columnheader" key={index + 1}>
+                    <span>Mansion day</span>
+                    <strong>{index + 1}</strong>
+                  </div>
+                ))}
+                <div className="day-column-head extra-column-head" role="columnheader">
+                  <span>Al‑Jabha only</span>
+                  <strong>14</strong>
+                </div>
+              </div>
+
+              {rows.map((row) => (
+                <div
+                  className={`mansion-row ${row.mansion.days === 14 ? "jabha-row" : ""}`}
+                  role="row"
+                  key={`${row.cycleYear}-${row.mansionIndex}`}
+                >
+                  <div className="mansion-name-cell" role="rowheader">
+                    <span className="mansion-index">{String(row.mansionIndex + 1).padStart(2, "0")}</span>
+                    <div>
+                      <strong>{row.mansion.en}</strong>
+                      <span className="arabic" lang="ar" dir="rtl">{row.mansion.ar}</span>
+                      <small>{formatShortDate(row.startMs)} – {formatShortDate(row.startMs + (row.mansion.days - 1) * DAY_MS)}</small>
+                    </div>
+                  </div>
+
+                  {Array.from({ length: 13 }, (_, index) => {
+                    const day = row.dates[index];
+                    return (
+                      <DateCell
+                        day={day}
+                        key={day.dateIso}
+                        selectedIso={selectedIso}
+                        todayIso={todayIso}
+                        viewMonth={viewMonth}
+                        viewYear={viewYear}
+                        onSelect={selectDate}
+                      />
+                    );
+                  })}
+
+                  {row.mansion.days === 14 ? (
+                    <DateCell
+                      day={row.dates[13]}
+                      selectedIso={selectedIso}
+                      todayIso={todayIso}
+                      viewMonth={viewMonth}
+                      viewYear={viewYear}
+                      onSelect={selectDate}
+                      extra
+                    />
+                  ) : (
+                    <div className="empty-extra-cell" role="cell" aria-label="No fourteenth day"><span>—</span></div>
+                  )}
+                </div>
+              ))}
             </div>
-            <p className="arabic-name" lang="ar" dir="rtl">{selectedDay.mansion.ar}</p>
-            <dl>
-              <div>
-                <dt>Day in mansion</dt>
-                <dd>{selectedDay.dayInMansion} <small>/ {selectedDay.mansion.days}</small></dd>
-              </div>
-              <div>
-                <dt>Cycle day</dt>
-                <dd>{selectedDay.cycleDay} <small>/ 365</small></dd>
-              </div>
-              <div>
-                <dt>Calendar month</dt>
-                <dd className="month-value">{selectedMonth}</dd>
-              </div>
-            </dl>
-            {selectedDay.mansion.en === "Al-Jabha" && (
-              <div className="jabha-note">
-                <span>14</span>
-                <p><strong>Al‑Jabha exception</strong>The only 14-day mansion in the cycle.</p>
-              </div>
-            )}
-          </section>
+          </div>
 
-          <section className="legend">
-            <p className="eyebrow">Layers</p>
-            <div><span className="legend-mansion" />Mansion week · 13 days</div>
-            <div><span className="legend-jabha" />Al‑Jabha · 14 days</div>
-            <div><span className="legend-month" />Gregorian calendar month</div>
-            <div><span className="legend-today">✦</span>Today</div>
-          </section>
-        </aside>
+          <div className="scroll-hint"><span>↔</span> Swipe horizontally to see all 13 mansion days</div>
+        </section>
+
+        <section className="detail-grid" aria-live="polite">
+          <article className="selected-card">
+            <p className="eyebrow">{selectedIso === todayIso ? "Today" : "Selected date"}</p>
+            <h2>{formatFullDate(selectedDateMs)}</h2>
+            <label className="date-jump">
+              <span>Choose any date</span>
+              <input
+                type="date"
+                value={selectedIso}
+                onChange={(event) => event.currentTarget.value && selectDate(event.currentTarget.value)}
+                onInput={(event) => event.currentTarget.value && selectDate(event.currentTarget.value)}
+              />
+            </label>
+          </article>
+
+          <article className="mansion-card">
+            <div className="mansion-card-title">
+              <span>{String(selectedDay.mansionIndex + 1).padStart(2, "0")}</span>
+              <div>
+                <p>Mansion week</p>
+                <h3>{selectedDay.mansion.en}</h3>
+              </div>
+              <b lang="ar" dir="rtl">{selectedDay.mansion.ar}</b>
+            </div>
+            <dl>
+              <div><dt>Day in mansion</dt><dd>{selectedDay.dayInMansion}<small> / {selectedDay.mansion.days}</small></dd></div>
+              <div><dt>Mansion span</dt><dd className="range-value">{formatShortDate(selectedMansionStart)}<small> to </small>{formatShortDate(selectedMansionEnd)}</dd></div>
+              <div><dt>Cycle day</dt><dd>{selectedDay.cycleDay}<small> / 365</small></dd></div>
+            </dl>
+            {selectedDay.mansion.days === 14 && (
+              <div className="jabha-note"><strong>14</strong><span>Al‑Jabha is the only 14-day mansion.</span></div>
+            )}
+          </article>
+
+          <article className="cycle-card">
+            <p className="eyebrow">Continuous mansion cycle {selectedDay.cycleYear}</p>
+            <h3>{formatShortDate(selectedCycleStart)} — {formatShortDate(selectedCycleEnd)}</h3>
+            <div className="equation"><span>27 × 13</span><b>+</b><span>Al‑Jabha 14</span><b>=</b><strong>365 days</strong></div>
+            <p>Calendar months are an overlay and may cross several mansion weeks.</p>
+          </article>
+        </section>
       </section>
     </main>
+  );
+}
+
+function DateCell({
+  day,
+  extra = false,
+  onSelect,
+  selectedIso,
+  todayIso,
+  viewMonth,
+  viewYear,
+}: {
+  day: MansionDate;
+  extra?: boolean;
+  onSelect: (dateIso: string) => void;
+  selectedIso: string;
+  todayIso: string;
+  viewMonth: number;
+  viewYear: number;
+}) {
+  const date = new Date(day.dateMs);
+  const inMonth = date.getUTCFullYear() === viewYear && date.getUTCMonth() === viewMonth;
+  const weekday = new Intl.DateTimeFormat("en-GB", { weekday: "short", timeZone: "UTC" })
+    .format(date)
+    .toUpperCase();
+  const month = new Intl.DateTimeFormat("en-GB", { month: "short", timeZone: "UTC" })
+    .format(date)
+    .toUpperCase();
+
+  return (
+    <button
+      type="button"
+      role="cell"
+      className={`date-cell ${inMonth ? "in-month" : "outside-month"} ${
+        day.dateIso === selectedIso ? "selected" : ""
+      } ${day.dateIso === todayIso ? "today" : ""} ${extra ? "extra-day" : ""}`}
+      aria-label={`${formatFullDate(day.dateMs)}, ${day.mansion.en}, mansion day ${day.dayInMansion}`}
+      onClick={() => onSelect(day.dateIso)}
+    >
+      <span className="weekday">{weekday}</span>
+      <strong>{date.getUTCDate()}</strong>
+      <span className="cell-month">{month}</span>
+      {day.dateIso === todayIso && <i>Today</i>}
+    </button>
   );
 }
