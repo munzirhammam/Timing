@@ -2,8 +2,10 @@
 
 An interactive bilingual calendar of 28 sky markers with a fixed 365-day cycle,
 regional dawn alignments, local seasonal outlooks, and offline support. The
-international star or asterism label is primary; the historical Arabic lunar
-mansion is retained as a secondary reference.
+plain-language constellation feature is primary; the historical Arabic lunar
+mansion and catalog designation are retained as secondary references. Each
+selected marker also includes a compact schematic star map with its related
+star or star group highlighted.
 
 ## Australia alignment
 
@@ -15,7 +17,7 @@ temperate conditions differ greatly across the continent:
 - **Temperate South** — day 1 on 17 May 2026, referenced to latitude 35° south
 
 Each date is a reproducible approximation of the traditional first dawn
-appearance of the Sheratan–Mesarthim marker: the marker is rising through 5°
+appearance of the Aries Horns marker (β–γ Arietis): the marker is rising through 5°
 altitude while the Sun is at or below −12°. Clouds, terrain, twilight, light
 pollution and exact coordinates affect actual visibility, so the app does not
 claim that a marker will be visible from every place on every date. The manual
