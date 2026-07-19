@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { OUTLOOK_ICONS, OUTLOOKS } from "./outlooks";
 
 type RegionId = "gulf" | "sudan" | "classical";
 
@@ -265,6 +266,8 @@ export default function Home() {
   const [viewYear, setViewYear] = useState(INITIAL_TODAY.getUTCFullYear());
   const [viewMonth, setViewMonth] = useState(INITIAL_TODAY.getUTCMonth());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+  const [offlineReady, setOfflineReady] = useState(false);
 
   const profile = REGION_PROFILES[regionId];
   const mansions = profile.mansions;
@@ -274,20 +277,74 @@ export default function Home() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const detectedZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-      const detectedRegion = regionFromTimeZone(detectedZone);
-      const nextToday = todayIsoForTimeZone(detectedZone);
+      const storedRegion = window.localStorage.getItem("lunar-mansion-region") as RegionId | null;
+      const detectedRegion = storedRegion && storedRegion in REGION_PROFILES
+        ? storedRegion
+        : regionFromTimeZone(detectedZone);
+      const storedAnchor = window.localStorage.getItem("lunar-mansion-anchor");
+      const storedTimeZone = window.localStorage.getItem("lunar-mansion-timezone");
+      const activeZone = storedTimeZone || detectedZone;
+      const nextToday = todayIsoForTimeZone(activeZone);
       const nextDate = new Date(parseIsoDate(nextToday));
 
-      setTimeZone(detectedZone);
+      setTimeZone(activeZone);
       setRegionId(detectedRegion);
-      setAnchorIso(REGION_PROFILES[detectedRegion].anchorIso);
-      setLocationSource(`Time zone · ${detectedZone}`);
+      setAnchorIso(storedAnchor || REGION_PROFILES[detectedRegion].anchorIso);
+      setLocationSource(storedRegion ? "Saved regional selection" : `Time zone · ${detectedZone}`);
       setSelectedIso(nextToday);
       setViewYear(nextDate.getUTCFullYear());
       setViewMonth(nextDate.getUTCMonth());
     }, 0);
 
     return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const updateConnection = () => setIsOnline(window.navigator.onLine);
+    const timer = window.setTimeout(updateConnection, 0);
+
+    window.addEventListener("online", updateConnection);
+    window.addEventListener("offline", updateConnection);
+
+    if ("serviceWorker" in navigator && window.isSecureContext) {
+      navigator.serviceWorker.register("/sw.js")
+        .then(() => navigator.serviceWorker.ready)
+        .then((registration) => {
+          if (cancelled) return;
+
+          const assetUrls = Array.from(
+            document.querySelectorAll<HTMLScriptElement | HTMLLinkElement>("script[src], link[href]"),
+          )
+            .map((element) => element instanceof HTMLScriptElement ? element.src : element.href)
+            .filter((url) => url.startsWith(window.location.origin));
+
+          const channel = new MessageChannel();
+          channel.port1.onmessage = () => {
+            if (cancelled) return;
+            setOfflineReady(true);
+            window.localStorage.setItem("lunar-mansion-offline-ready", "true");
+          };
+
+          registration.active?.postMessage(
+            {
+              type: "CACHE_URLS",
+              urls: [window.location.href, "/", "/manifest.webmanifest", "/favicon.svg", ...assetUrls],
+            },
+            [channel.port2],
+          );
+        })
+        .catch(() => {
+          if (!cancelled) setOfflineReady(false);
+        });
+    }
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      window.removeEventListener("online", updateConnection);
+      window.removeEventListener("offline", updateConnection);
+    };
   }, []);
 
   const monthStart = Date.UTC(viewYear, viewMonth, 1);
@@ -332,6 +389,11 @@ export default function Home() {
   const selectedMansionEnd = selectedMansionStart + (selectedDay.mansion.days - 1) * DAY_MS;
   const selectedCycleStart = cycleStartForYear(selectedDay.cycleYear, anchorIso);
   const selectedCycleEnd = selectedCycleStart + 364 * DAY_MS;
+  const selectedOutlook = OUTLOOKS[regionId][selectedDay.mansionIndex];
+  const nextMansionIndex = (selectedDay.mansionIndex + 1) % mansions.length;
+  const nextMansion = mansions[nextMansionIndex];
+  const nextOutlook = OUTLOOKS[regionId][nextMansionIndex];
+  const mansionProgress = Math.round((selectedDay.dayInMansion / selectedDay.mansion.days) * 100);
 
   const monthTitle = new Intl.DateTimeFormat("en-GB", {
     month: "long",
@@ -341,11 +403,20 @@ export default function Home() {
 
   function applyRegion(nextRegion: RegionId, source: string, nextTimeZone?: string) {
     const nextProfile = REGION_PROFILES[nextRegion];
+    const activeTimeZone = nextTimeZone || nextProfile.timeZone;
     setRegionId(nextRegion);
     setAnchorIso(nextProfile.anchorIso);
-    setTimeZone(nextTimeZone || nextProfile.timeZone);
+    setTimeZone(activeTimeZone);
     setLocationSource(source);
     setLocationMessage("");
+    window.localStorage.setItem("lunar-mansion-region", nextRegion);
+    window.localStorage.setItem("lunar-mansion-anchor", nextProfile.anchorIso);
+    window.localStorage.setItem("lunar-mansion-timezone", activeTimeZone);
+  }
+
+  function applyAnchor(nextAnchor: string) {
+    setAnchorIso(nextAnchor);
+    window.localStorage.setItem("lunar-mansion-anchor", nextAnchor);
   }
 
   function useMyLocation() {
@@ -471,11 +542,18 @@ export default function Home() {
               <input
                 type="date"
                 value={anchorIso}
-                onChange={(event) => event.currentTarget.value && setAnchorIso(event.currentTarget.value)}
+                onChange={(event) => event.currentTarget.value && applyAnchor(event.currentTarget.value)}
               />
             </label>
             <p>{profile.description} The date can be corrected for a more specific local tradition.</p>
-            <button className="reset-button" type="button" onClick={() => setAnchorIso(profile.anchorIso)}>
+            <div className={`offline-status ${!isOnline ? "offline" : offlineReady ? "ready" : "preparing"}`}>
+              <span aria-hidden="true">{!isOnline ? "◉" : offlineReady ? "✓" : "↓"}</span>
+              <div>
+                <strong>{!isOnline ? "Running offline" : offlineReady ? "Offline ready" : "Preparing offline use"}</strong>
+                <small>After one online visit, the calendar and regional outlook can reopen without a connection.</small>
+              </div>
+            </div>
+            <button className="reset-button" type="button" onClick={() => applyAnchor(profile.anchorIso)}>
               Reset regional alignment
             </button>
           </section>
@@ -506,6 +584,9 @@ export default function Home() {
             <span><b>⌖</b>{profile.label}</span>
             <span><b>◷</b>{timeZone}</span>
             <span><b>◇</b>{mansions[0].en} day 1 · {formatShortDate(parseIsoDate(anchorIso))}</span>
+            <span className={`connection-indicator ${!isOnline ? "offline" : offlineReady ? "ready" : ""}`}>
+              <b>●</b>{!isOnline ? "Offline mode" : offlineReady ? "Offline ready" : "Online"}
+            </span>
           </div>
 
           <div className="calendar-frame">
@@ -576,6 +657,55 @@ export default function Home() {
           </div>
 
           <div className="fit-note"><span>↔</span> All mansion-day columns resize to fit this view</div>
+        </section>
+
+        <section className={`outlook-card tone-${selectedOutlook.tone}`} aria-label="Regional lunar-mansion outlook" aria-live="polite">
+          <div className="outlook-heading">
+            <div>
+              <p className="eyebrow">Traditional seasonal indication · {profile.label}</p>
+              <h2>REGIONAL LUNAR-MANSION OUTLOOK</h2>
+            </div>
+            <div className="outlook-badges">
+              <span>{selectedDay.mansion.en}</span>
+              <span>Day {selectedDay.dayInMansion}/{selectedDay.mansion.days}</span>
+            </div>
+          </div>
+
+          <div className="outlook-grid">
+            <div className="outlook-lead">
+              <div className="outlook-signal" aria-hidden="true">{OUTLOOK_ICONS[selectedOutlook.tone]}</div>
+              <div>
+                <span>{selectedOutlook.season}</span>
+                <h3>{selectedOutlook.title}</h3>
+                <p>{selectedOutlook.air}</p>
+              </div>
+              <div className="mansion-progress" aria-label={`${mansionProgress}% through this mansion`}>
+                <span style={{ width: `${mansionProgress}%` }} />
+              </div>
+            </div>
+
+            <div className="outlook-details">
+              <article>
+                <span aria-hidden="true">◌</span>
+                <div><small>Land & water</small><p>{selectedOutlook.land}</p></div>
+              </article>
+              <article>
+                <span aria-hidden="true">△</span>
+                <div><small>Practical note</small><p>{selectedOutlook.guidance}</p></div>
+              </article>
+            </div>
+
+            <aside className="next-outlook">
+              <small>Next mansion</small>
+              <div><strong>{nextMansion.en}</strong><b lang="ar" dir="rtl">{nextMansion.ar}</b></div>
+              <span>{formatShortDate(selectedMansionEnd + DAY_MS)}</span>
+              <p>{nextOutlook.title}</p>
+            </aside>
+          </div>
+
+          <p className="outlook-disclaimer">
+            This is a traditional regional climatological outlook, not a live weather forecast or safety warning. Conditions vary by coast, desert, elevation and local rainfall; use official forecasts for decisions.
+          </p>
         </section>
 
         <section className="detail-grid" aria-live="polite">

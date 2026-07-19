@@ -15,13 +15,23 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Lunar Mansion Calendar",
   description:
-    "A responsive regional calendar of the 28 Arabic seasonal lunar mansions, with 13 mansion days and a fourteenth day for Al-Jabha.",
+    "An offline-capable regional calendar and traditional seasonal outlook for the 28 Arabic lunar mansions.",
+  manifest: "/manifest.webmanifest",
   other: {
     "codex-preview": "development",
   },
   icons: {
-    icon: "/favicon.svg",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
     shortcut: "/favicon.svg",
+    apple: "/icon-192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Lunar Mansions",
   },
 };
 
