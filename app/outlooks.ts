@@ -11,6 +11,8 @@ export type MansionOutlook = {
   tone: OutlookTone;
 };
 
+export type MansionOutlookCopy = Omit<MansionOutlook, "tone">;
+
 const GULF_OUTLOOKS: MansionOutlook[] = [
   {
     season: "Late spring · Al-Thurayya",

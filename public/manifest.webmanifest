@@ -1,7 +1,7 @@
 {
-  "name": "Regional Lunar Mansion Calendar",
-  "short_name": "Lunar Mansions",
-  "description": "A regional 365-day lunar-mansion calendar and traditional seasonal outlook.",
+  "name": "Regional Lunar Mansion Calendar · تقويم المنازل القمرية الإقليمي",
+  "short_name": "Lunar Mansions · المنازل",
+  "description": "A bilingual regional 365-day lunar-mansion calendar and traditional seasonal outlook. تقويم إقليمي ثنائي اللغة للمنازل القمرية.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

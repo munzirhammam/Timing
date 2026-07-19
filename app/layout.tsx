@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lunar Mansion Calendar",
+  title: "Lunar Mansion Calendar | تقويم المنازل القمرية",
   description:
-    "An offline-capable regional calendar and traditional seasonal outlook for the 28 Arabic lunar mansions.",
+    "An offline-capable bilingual regional calendar and traditional seasonal outlook for the 28 Arabic lunar mansions. تقويم إقليمي ثنائي اللغة يعمل دون اتصال.",
   manifest: "/manifest.webmanifest",
   other: {
     "codex-preview": "development",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Lunar Mansions",
+    title: "Lunar Mansions · المنازل القمرية",
   },
 };
 
@@ -41,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

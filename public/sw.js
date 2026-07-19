@@ -1,4 +1,4 @@
-const CACHE_NAME = "lunar-mansion-calendar-v4";
+const CACHE_NAME = "lunar-mansion-calendar-v5";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
