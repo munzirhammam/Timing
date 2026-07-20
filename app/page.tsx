@@ -545,7 +545,7 @@ const ABOUT_COPY = {
     ],
   },
   ar: {
-    title: "تقويم العِنات الإقليمي",
+    title: "تقويم العِينات الإقليمي",
     paragraphs: [
       "تقويم تفاعلي ثنائي اللغة يعرض المنازل القمرية التقليدية الثمانية والعشرين ضمن دورة موسمية إقليمية متصلة مدتها 365 يومًا. تمتد سبعة وعشرون منزلة لمدة 13 يومًا، بينما تمتد منزلة الجبهة وحدها لمدة 14 يومًا.",
       "يعرض جدول الشهر الميلادي كل تاريخ مع مجموعة النجوم المرتبطة به واسم المنزلة المستخدم في المنطقة المختارة. وتتبع محاذاة الدورة الموقع ومرجع ظهور النجوم عند الفجر، وتشمل الخليج العربي والسودان وثلاثة أقاليم مناخية في أستراليا. كما تتضمن كل فترة خريطة نجوم مبسطة ودلالة موسمية إقليمية.",
@@ -1017,7 +1017,14 @@ export default function Home() {
               عربي
             </button>
           </div>
-          <button className="location-pill" type="button" onClick={() => { setAboutOpen(false); setSettingsOpen(true); }}>
+          <button
+            className={`location-pill ${settingsOpen ? "active" : ""}`}
+            type="button"
+            aria-label={copy.openSettings}
+            aria-expanded={settingsOpen}
+            aria-controls="regional-settings"
+            onClick={() => { setAboutOpen(false); setSettingsOpen((open) => !open); }}
+          >
             <span aria-hidden="true">⌖</span>{profileLabel(profile, language, true)}
           </button>
           <button
@@ -1034,22 +1041,10 @@ export default function Home() {
             <span aria-hidden="true">ⓘ</span>{copy.about}
           </button>
           <button className="today-button" type="button" onClick={goToToday}>{copy.today}</button>
-          <button
-            className={`settings-button ${settingsOpen ? "active" : ""}`}
-            type="button"
-            aria-label={copy.openSettings}
-            aria-expanded={settingsOpen}
-            onClick={() => {
-              setAboutOpen(false);
-              setSettingsOpen((open) => !open);
-            }}
-          >
-            <span aria-hidden="true">⚙</span>
-          </button>
         </div>
 
         {settingsOpen && (
-          <section className="settings-popover" aria-label={copy.settingsLabel}>
+          <section className="settings-popover" id="regional-settings" aria-label={copy.settingsLabel}>
             <div className="settings-heading">
               <div>
                 <p className="eyebrow">{copy.locationTradition}</p>

@@ -213,6 +213,7 @@ button { color: inherit; }
 
 .location-pill { align-items: center; border-color: rgba(201, 164, 91, .3); color: #b9c2ce; display: flex; gap: 7px; }
 .location-pill span { color: var(--gold-light); font-size: 15px; }
+.location-pill.active { background: rgba(201, 164, 91, .14); border-color: rgba(239, 202, 121, .46); color: var(--gold-light); }
 
 .about-button {
   align-items: center;
@@ -233,21 +234,6 @@ button { color: inherit; }
 .about-button span { color: var(--gold-light); font-size: 15px; }
 .about-button:hover, .about-button.active { background: rgba(201, 164, 91, .12); border-color: rgba(239, 202, 121, .46); color: var(--gold-light); }
 .app-shell[lang="ar"] .about-button { letter-spacing: 0; }
-
-.settings-button {
-  align-items: center;
-  background: transparent;
-  border: 0;
-  border-radius: 50%;
-  color: #9ca7b2;
-  cursor: pointer;
-  display: flex;
-  font-size: 24px;
-  height: 42px;
-  justify-content: center;
-  width: 42px;
-}
-.settings-button.active, .settings-button:hover { color: var(--gold-light); }
 
 .about-layer { inset: 0; position: fixed; z-index: 100; }
 .about-backdrop {
@@ -798,7 +784,7 @@ button { color: inherit; }
   .topbar { flex-wrap: wrap; height: auto; padding: 12px; }
   .brand { gap: 8px; }
   .brand h1 { font-size: 15px; max-width: 178px; }
-  .brand p, .location-pill { display: none; }
+  .brand p { display: none; }
   .moon-mark { height: 34px; width: 34px; }
   .moon-mark::before { height: 20px; left: 6px; top: 7px; width: 20px; }
   .moon-mark::after { height: 19px; left: 13px; top: 5px; width: 19px; }
@@ -806,7 +792,7 @@ button { color: inherit; }
   .today-button { height: 40px; padding: 0 10px; }
   .top-actions { gap: 5px; }
   .language-switcher button { min-width: 34px; padding: 0 5px; }
-  .settings-button { height: 36px; width: 30px; }
+  .location-pill { font-size: 11px; height: 40px; letter-spacing: .04em; padding: 0 9px; }
   .about-button { font-size: 12px; height: 40px; padding: 0 9px; }
   .about-dialog { max-height: 88vh; }
   .about-content p { font-size: 14px; line-height: 1.7; }
@@ -856,7 +842,7 @@ button { color: inherit; }
   .language-switcher button { font-size: 12px; height: 36px; min-width: 34px; padding: 0 5px; }
   .today-button { font-size: 12px; height: 38px; padding: 0 8px; }
   .about-button { font-size: 11px; gap: 4px; height: 38px; padding: 0 7px; }
-  .settings-button { height: 38px; width: 31px; }
+  .location-pill { font-size: 10px; gap: 4px; height: 38px; max-width: 82px; overflow: hidden; padding: 0 7px; white-space: nowrap; }
   .about-dialog { border-radius: 14px; padding: 20px 17px; width: calc(100vw - 16px); }
   .about-heading h2 { font-size: 24px; }
   .about-heading > button { height: 34px; width: 34px; }
