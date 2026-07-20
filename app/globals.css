@@ -698,11 +698,20 @@ button { color: inherit; }
   .calendar-header, .mansion-row { grid-template-columns: clamp(78px, 22vw, 120px) repeat(13, minmax(0, 1fr)) clamp(20px, 5vw, 38px); }
   .mansion-column-head span, .day-column-head span { display: none; }
   .mansion-name-cell strong { font-size: clamp(10px, 1.7vw, 13px); }
-  .mansion-name-cell .traditional-name { display: none; }
+  .mansion-name-cell .traditional-name {
+    display: -webkit-box;
+    font-size: clamp(9px, 1.35vw, 11px);
+    line-height: 1.15;
+    margin-top: 2px;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
   .date-cell .weekday, .date-cell .cell-month { display: none; }
   .date-cell strong { margin: 0; }
   .date-cell i { border-radius: 50%; font-size: 0; height: 5px; padding: 0; width: 5px; }
-  .mansion-row, .date-cell, .empty-extra-cell { min-height: clamp(58px, 9vw, 74px); }
+  .mansion-row, .date-cell, .empty-extra-cell { min-height: clamp(70px, 10vw, 82px); }
   .calendar-header { min-height: 43px; }
 }
 
@@ -770,9 +779,10 @@ button { color: inherit; }
   .mansion-name-cell { gap: 3px; padding: 5px 4px; }
   .mansion-index { font-size: 10px; }
   .mansion-name-cell strong { font-size: clamp(10px, 2.9vw, 12px); line-height: 1.15; }
+  .mansion-name-cell .traditional-name { font-size: 9px; }
   .day-column-head strong, .date-cell strong { font-size: clamp(11px, 3.2vw, 14px); }
   .calendar-header { min-height: 42px; }
-  .mansion-row, .date-cell, .empty-extra-cell { min-height: 58px; }
+  .mansion-row, .date-cell, .empty-extra-cell { min-height: 72px; }
   .alignment-strip { font-size: 10px; gap: 6px 10px; line-height: 1.4; }
   .alignment-strip .connection-indicator { display: flex; }
   .fit-note { font-size: 10px; line-height: 1.4; }
