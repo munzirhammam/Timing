@@ -25,7 +25,6 @@ type Mansion = {
   ar: string;
   starEn: string;
   starAr: string;
-  designation: string;
   constellationEn: string;
   constellationAr: string;
   days: number;
@@ -35,7 +34,7 @@ type Mansion = {
 
 type SkyMarker = Pick<
   Mansion,
-  "starEn" | "starAr" | "designation" | "constellationEn" | "constellationAr"
+  "starEn" | "starAr" | "constellationEn" | "constellationAr"
 >;
 
 type StarMapPattern = {
@@ -79,34 +78,34 @@ const MANSION_LENGTHS = Array.from({ length: 28 }, (_, index) => (index === 9 ? 
 const GULF_ANCHOR_ISO = "2026-05-12";
 
 const SKY_MARKERS: SkyMarker[] = [
-  { starEn: "Aries Horns", starAr: "قرنا الحمل", designation: "β–γ Arietis", constellationEn: "Aries", constellationAr: "الحمل" },
-  { starEn: "Aries Belly", starAr: "بطن الحمل", designation: "δ, ε, π Arietis", constellationEn: "Aries", constellationAr: "الحمل" },
-  { starEn: "Taurus Pleiades", starAr: "ثريا الثور", designation: "M45", constellationEn: "Taurus", constellationAr: "الثور" },
-  { starEn: "Taurus Eye", starAr: "عين الثور", designation: "α Tauri", constellationEn: "Taurus", constellationAr: "الثور" },
-  { starEn: "Orion Head", starAr: "رأس الجبار", designation: "λ, φ¹, φ² Orionis", constellationEn: "Orion", constellationAr: "الجبار" },
-  { starEn: "Gemini Feet", starAr: "قدما التوأمين", designation: "γ–ξ Geminorum", constellationEn: "Gemini", constellationAr: "التوأمان" },
-  { starEn: "Gemini Twin Stars", starAr: "نجما التوأمين", designation: "α–β Geminorum", constellationEn: "Gemini", constellationAr: "التوأمان" },
-  { starEn: "Cancer Beehive", starAr: "خلية نحل السرطان", designation: "M44 · γ–δ Cancri", constellationEn: "Cancer", constellationAr: "السرطان" },
-  { starEn: "Leo Eyes", starAr: "عينا الأسد", designation: "λ Leonis · faint Cancer star", constellationEn: "Leo", constellationAr: "الأسد" },
-  { starEn: "Leo Forehead", starAr: "جبهة الأسد", designation: "ζ, γ, η, α Leonis", constellationEn: "Leo", constellationAr: "الأسد" },
-  { starEn: "Leo Mane", starAr: "لبدة الأسد", designation: "δ–θ Leonis", constellationEn: "Leo", constellationAr: "الأسد" },
-  { starEn: "Leo Tail", starAr: "ذيل الأسد", designation: "β Leonis", constellationEn: "Leo", constellationAr: "الأسد" },
-  { starEn: "Virgo Star Arc", starAr: "قوس نجوم العذراء", designation: "β, η, γ, δ, ε Virginis", constellationEn: "Virgo", constellationAr: "العذراء" },
-  { starEn: "Virgo Wheat Ear", starAr: "سنبلة العذراء", designation: "α Virginis", constellationEn: "Virgo", constellationAr: "العذراء" },
-  { starEn: "Virgo Faint Trio", starAr: "ثلاثي العذراء الخافت", designation: "ι, κ, λ Virginis", constellationEn: "Virgo", constellationAr: "العذراء" },
-  { starEn: "Libra Scales", starAr: "كفّتا الميزان", designation: "α–β Librae", constellationEn: "Libra", constellationAr: "الميزان" },
-  { starEn: "Scorpius Head", starAr: "رأس العقرب", designation: "β, δ, π Scorpii", constellationEn: "Scorpius", constellationAr: "العقرب" },
-  { starEn: "Scorpius Heart", starAr: "قلب العقرب", designation: "α Scorpii", constellationEn: "Scorpius", constellationAr: "العقرب" },
-  { starEn: "Scorpius Tail", starAr: "ذيل العقرب", designation: "λ–υ Scorpii", constellationEn: "Scorpius", constellationAr: "العقرب" },
-  { starEn: "Sagittarius Teapot", starAr: "إبريق القوس", designation: "γ, δ, ε, η, φ, ζ, τ, σ Sagittarii", constellationEn: "Sagittarius", constellationAr: "القوس" },
-  { starEn: "Sagittarius Empty Field", starAr: "الفراغ في القوس", designation: "ξ, ο, π, 43, ρ, υ Sagittarii · empty centre", constellationEn: "Sagittarius", constellationAr: "القوس" },
-  { starEn: "Capricornus Head", starAr: "رأس الجدي", designation: "α–β Capricorni", constellationEn: "Capricornus", constellationAr: "الجدي" },
-  { starEn: "Aquarius West Pair", starAr: "زوج الدلو الغربي", designation: "ε–μ Aquarii", constellationEn: "Aquarius", constellationAr: "الدلو" },
-  { starEn: "Aquarius Middle Pair", starAr: "زوج الدلو الأوسط", designation: "β–ξ Aquarii", constellationEn: "Aquarius", constellationAr: "الدلو" },
-  { starEn: "Aquarius Water Jar", starAr: "جرة ماء الدلو", designation: "γ, π, ζ, η Aquarii", constellationEn: "Aquarius", constellationAr: "الدلو" },
-  { starEn: "Pegasus West Side", starAr: "ضلع الفرس الأعظم الغربي", designation: "α–β Pegasi", constellationEn: "Pegasus", constellationAr: "الفرس الأعظم" },
-  { starEn: "Pegasus East Side", starAr: "ضلع الفرس الأعظم الشرقي", designation: "γ Pegasi · α Andromedae", constellationEn: "Pegasus", constellationAr: "الفرس الأعظم" },
-  { starEn: "Andromeda Mirach", starAr: "ميراخ في المرأة المسلسلة", designation: "β Andromedae", constellationEn: "Andromeda", constellationAr: "المرأة المسلسلة" },
+  { starEn: "Aries Horns", starAr: "قرنا الحمل", constellationEn: "Aries", constellationAr: "الحمل" },
+  { starEn: "Aries Belly", starAr: "بطن الحمل", constellationEn: "Aries", constellationAr: "الحمل" },
+  { starEn: "Pleiades in Taurus", starAr: "الثريا", constellationEn: "Taurus", constellationAr: "الثور" },
+  { starEn: "Taurus Eye", starAr: "عين الثور", constellationEn: "Taurus", constellationAr: "الثور" },
+  { starEn: "Orion Head", starAr: "رأس الجبار", constellationEn: "Orion", constellationAr: "الجبار" },
+  { starEn: "Gemini Feet", starAr: "قدما الجوزاء", constellationEn: "Gemini", constellationAr: "الجوزاء" },
+  { starEn: "Gemini Twin Stars", starAr: "ذراعا الجوزاء", constellationEn: "Gemini", constellationAr: "الجوزاء" },
+  { starEn: "Beehive in Cancer", starAr: "السرطان", constellationEn: "Cancer", constellationAr: "السرطان" },
+  { starEn: "Leo Eyes", starAr: "عينا الأسد", constellationEn: "Leo", constellationAr: "الأسد" },
+  { starEn: "Leo Forehead", starAr: "جبهة الأسد", constellationEn: "Leo", constellationAr: "الأسد" },
+  { starEn: "Leo Mane", starAr: "لبدة الأسد", constellationEn: "Leo", constellationAr: "الأسد" },
+  { starEn: "Leo Tail", starAr: "ذيل الأسد", constellationEn: "Leo", constellationAr: "الأسد" },
+  { starEn: "Virgo Star Arc", starAr: "قوس العذراء", constellationEn: "Virgo", constellationAr: "العذراء" },
+  { starEn: "Virgo Wheat Ear", starAr: "سنبلة العذراء", constellationEn: "Virgo", constellationAr: "العذراء" },
+  { starEn: "Virgo Faint Trio", starAr: "نجوم العذراء", constellationEn: "Virgo", constellationAr: "العذراء" },
+  { starEn: "Libra Scales", starAr: "الميزان", constellationEn: "Libra", constellationAr: "الميزان" },
+  { starEn: "Scorpius Head", starAr: "رأس العقرب", constellationEn: "Scorpius", constellationAr: "العقرب" },
+  { starEn: "Scorpius Heart", starAr: "قلب العقرب", constellationEn: "Scorpius", constellationAr: "العقرب" },
+  { starEn: "Scorpius Tail", starAr: "ذيل العقرب", constellationEn: "Scorpius", constellationAr: "العقرب" },
+  { starEn: "Sagittarius Teapot", starAr: "إبريق القوس", constellationEn: "Sagittarius", constellationAr: "القوس" },
+  { starEn: "Sagittarius Open Field", starAr: "فسحة القوس", constellationEn: "Sagittarius", constellationAr: "القوس" },
+  { starEn: "Capricorn Head", starAr: "رأس الجدي", constellationEn: "Capricorn", constellationAr: "الجدي" },
+  { starEn: "Aquarius Western Pair", starAr: "نجما الدلو الغربيان", constellationEn: "Aquarius", constellationAr: "الدلو" },
+  { starEn: "Aquarius Middle Pair", starAr: "نجما وسط الدلو", constellationEn: "Aquarius", constellationAr: "الدلو" },
+  { starEn: "Aquarius Water Jar", starAr: "جرة الدلو", constellationEn: "Aquarius", constellationAr: "الدلو" },
+  { starEn: "Pegasus West Side", starAr: "مقدم الفرس", constellationEn: "Pegasus", constellationAr: "الفرس الأعظم" },
+  { starEn: "Pegasus East Side", starAr: "مؤخر الفرس", constellationEn: "Pegasus", constellationAr: "الفرس الأعظم" },
+  { starEn: "Andromeda Belt Star", starAr: "بطن الحوت", constellationEn: "Andromeda", constellationAr: "المرأة المسلسلة" },
 ];
 
 const STAR_MAP_PATTERNS = {
@@ -296,7 +295,7 @@ const CLASSICAL_MANSIONS = mansionSet([
   ["Al-Dhira'", "الذراع"], ["Al-Nathrah", "النثرة"], ["Al-Tarf", "الطرف"],
   ["Al-Jabha", "الجبهة", "14 days", "14 يومًا"], ["Al-Zubrah", "الزبرة"], ["Al-Sarfah", "الصرفة"],
   ["Al-Awwa", "العواء"], ["Al-Simak", "السماك الأعزل"], ["Al-Ghafr", "الغفر"],
-  ["Al-Zubana", "الزباني"], ["Al-Iklil", "الإكليل"], ["Al-Qalb", "القلب"],
+  ["Al-Zubana", "الزبانا"], ["Al-Iklil", "الإكليل"], ["Al-Qalb", "القلب"],
   ["Al-Shaula", "الشولة"], ["Al-Na'a'im", "النعائم"], ["Al-Baldah", "البلدة"],
   ["Sa'd Al-Dhabih", "سعد الذابح"], ["Sa'd Bula'", "سعد بلع"], ["Sa'd Al-Su'ud", "سعد السعود"],
   ["Sa'd Al-Akhbiyah", "سعد الأخبية"], ["Al-Fargh Al-Muqaddam", "الفرغ المقدم"],
@@ -453,7 +452,6 @@ const COPY = {
     calendarLabel: "Interactive seasonal star calendar",
     dateByMansionDay: "by star-period day",
     traditionalMansion: "Traditional mansion",
-    designation: "Star designation",
     constellation: "Constellation",
     dawnReference: "Dawn alignment reference",
     schematicMap: "Related stars · schematic view",
@@ -521,7 +519,6 @@ const COPY = {
     calendarLabel: "تقويم تفاعلي للنجوم الموسمية",
     dateByMansionDay: "بحسب يوم فترة النجم",
     traditionalMansion: "المنزل التقليدي",
-    designation: "التعيين النجمي",
     constellation: "الكوكبة",
     dawnReference: "مرجع محاذاة الفجر",
     schematicMap: "النجوم المرتبطة · رسم توضيحي",
@@ -1115,7 +1112,7 @@ export default function Home() {
                     <div>
                       <strong>{skyMarkerName(row.mansion, language)}</strong>
                       <span className="traditional-name">
-                        {mansionName(row.mansion, language)} · {row.mansion.designation}
+                        {mansionName(row.mansion, language)}
                       </span>
                       <small>{formatShortDate(row.startMs, language)} – {formatShortDate(row.startMs + (row.mansion.days - 1) * DAY_MS, language)}</small>
                     </div>
@@ -1186,7 +1183,6 @@ export default function Home() {
                     <p>{profileLabel(profile, language)} {copy.regionMansion}</p>
                     <h3>{skyMarkerName(selectedDay.mansion, language)}</h3>
                   </div>
-                  <b dir="ltr">{selectedDay.mansion.designation}</b>
                 </div>
                 <p className="sky-marker-meta">
                   <span><b>{copy.traditionalMansion}</b>{mansionName(selectedDay.mansion, language)}</span>

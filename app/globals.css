@@ -629,7 +629,6 @@ button { color: inherit; }
 .mansion-card-title > span { align-items: center; border: 1px solid var(--gold-dim); border-radius: 50%; color: var(--gold-light); display: flex; font-family: Georgia, serif; font-size: 11px; height: 34px; justify-content: center; }
 .mansion-card-title p { color: #97a4b5; font-size: 10px; letter-spacing: .11em; margin: 0 0 3px; text-transform: uppercase; }
 .mansion-card-title h3, .cycle-card h3 { color: var(--gold-light); font-family: Georgia, serif; font-size: 24px; font-weight: 400; line-height: 1.12; margin: 0; }
-.mansion-card-title b { color: #bdb3a3; font-family: Georgia, serif; font-size: 11px; font-weight: 400; grid-column: 2; overflow-wrap: anywhere; }
 .sky-marker-meta { color: #b0bac6; display: flex; flex-wrap: wrap; font-size: 11px; gap: 5px 18px; margin: 9px 0 -5px; margin-inline-start: 47px; }
 .sky-marker-meta span { display: flex; gap: 6px; }
 .sky-marker-meta b { color: #92a0b2; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
