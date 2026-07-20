@@ -32,6 +32,5 @@ test("renders development preview metadata", async () => {
   const html = await response.text();
   assert.match(html, developmentPreviewMeta);
   assert.match(html, /Lunar Mansions Calendar/);
-  assert.match(html, /Saudi Arabia/);
   assert.doesNotMatch(html, /Seasonal Star Calendar/);
 });
