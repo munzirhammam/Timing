@@ -13,9 +13,10 @@ import {
   type RegionalAnchorProfile,
   type RegionalObserver,
 } from "./annual-anchor";
-import { MANSION_MARKERS, projectMarkerToSvg } from "./mansion-catalogue";
+import { MANSION_MARKERS } from "./mansion-catalogue";
 import { OUTLOOK_ICONS, OUTLOOKS, type MansionOutlook } from "./outlooks";
 import { OUTLOOKS_AR } from "./outlooks-ar";
+import { starGroupSampleFor } from "./star-map-context";
 
 type RegionId = AnchorRegionId;
 type Language = "en" | "ar";
@@ -357,7 +358,7 @@ const COPY = {
     traditionalMansion: "Traditional mansion",
     constellation: "Constellation",
     dawnReference: "Dawn alignment reference",
-    schematicMap: "Related stars · ecliptic-reference view",
+    schematicMap: "Star-group sample · marker stars shine",
     visibilityNote: "The same 28 traditional markers are used in every region and identify successive ecliptic stations; some reference stars lie away from the narrow path. The annual dawn calculation is an offline geometric proxy and actual visibility may differ by about one day.",
   },
   ar: {
@@ -436,7 +437,7 @@ const COPY = {
     traditionalMansion: "المنزل التقليدي",
     constellation: "الكوكبة",
     dawnReference: "مرجع محاذاة الفجر",
-    schematicMap: "النجوم المرتبطة · منظر مرجعي لمسار البروج",
+    schematicMap: "نموذج مجموعة النجوم · العلامات مضيئة",
     visibilityNote: "تُستخدم العلامات التقليدية الثماني والعشرون نفسها في جميع المناطق لتحديد محطات متتابعة على مسار البروج، وقد تقع بعض النجوم المرجعية بعيدًا عن المسار الضيق. حساب الفجر نموذج هندسي يعمل دون اتصال، وقد تختلف الرؤية الفعلية بنحو يوم.",
   },
 } as const;
@@ -448,7 +449,7 @@ const ABOUT_COPY = {
       "This bilingual interactive calendar presents the 28 traditional lunar mansions as a continuous 365-day regional seasonal cycle. Twenty-seven periods contain 13 days, while Al‑Jabha contains 14 days.",
       "The traditional term “lunar mansions” describes 28 stellar stations along and around the ecliptic route historically associated with the Moon’s apparent path. The app uses the same audited marker sequence in every region; it does not calculate the Moon’s position or phases.",
       "Regional Day 1 is recalculated every year from an offline dawn-visibility proxy for the two Aries Horn stars. After Day 1, the calendar preserves the conventional fixed 13-day sequence and Al‑Jabha’s 14 days. If two annual anchors are 366 dates apart, the extra date is shown separately as an unnumbered Annual Alignment Day.",
-      "The Gregorian monthly table shows every date with its related star group and regional mansion name, together with a coordinate-based marker map and regional seasonal outlook. Reference profiles cover the Arabian Gulf, Sudan, and three Australian climate regions; the location option can use the observer’s coordinates.",
+      "The Gregorian monthly table shows every date with its related star group and regional mansion name, together with a schematic star-group sample whose mansion markers shine and a regional seasonal outlook. Reference profiles cover the Arabian Gulf, Sudan, and three Australian climate regions; the location option can use the observer’s coordinates.",
       "The calendar works in Arabic and English, adapts to mobile screens, and remains available offline after the first online visit.",
       "This is a traditional regional seasonal calendar—not a live weather forecast. The geometric dawn proxy can differ from actual naked-eye visibility by about one day because of haze, terrain and local horizon conditions.",
     ],
@@ -459,7 +460,7 @@ const ABOUT_COPY = {
       "تقويم تفاعلي ثنائي اللغة يعرض المنازل القمرية التقليدية الثمانية والعشرين ضمن دورة موسمية إقليمية متصلة مدتها 365 يومًا. تمتد سبعة وعشرون منزلة لمدة 13 يومًا، بينما تمتد منزلة الجبهة وحدها لمدة 14 يومًا.",
       "يشير الاسم التراثي «المنازل القمرية» إلى ثماني وعشرين محطة نجمية تقع على امتداد مسار البروج وحوله، وهو المسار المرتبط تاريخيًا بالحركة الظاهرية للقمر. يستخدم التطبيق تسلسل العلامات النجمية المدقَّق نفسه في جميع المناطق، ولا يحسب موضع القمر أو أطواره.",
       "يُعاد حساب اليوم الأول إقليميًا كل سنة بواسطة نموذج يعمل دون اتصال لظهور نجمي قرني الحمل عند الفجر. وبعد اليوم الأول يحافظ التقويم على التسلسل التقليدي الثابت من 13 يومًا، وعلى 14 يومًا للجبهة. وإذا فصل 366 تاريخًا بين مرساتين سنويتين، يظهر التاريخ الزائد منفصلًا باسم «يوم ضبط الدورة السنوي» من دون رقم.",
-      "يعرض جدول الشهر الميلادي كل تاريخ مع مجموعة النجوم المرتبطة به واسم المنزلة الإقليمي، إضافة إلى خريطة مبنية على الإحداثيات ودلالة موسمية. وتشمل الملفات المرجعية الخليج العربي والسودان وثلاثة أقاليم مناخية في أستراليا، ويمكن لخيار الموقع استخدام إحداثيات الراصد.",
+      "يعرض جدول الشهر الميلادي كل تاريخ مع مجموعة النجوم المرتبطة به واسم المنزلة الإقليمي، إضافة إلى نموذج مبسط لمجموعة النجوم تتوهج فيه علامات المنزلة ودلالة موسمية. وتشمل الملفات المرجعية الخليج العربي والسودان وثلاثة أقاليم مناخية في أستراليا، ويمكن لخيار الموقع استخدام إحداثيات الراصد.",
       "يعمل التقويم باللغتين العربية والإنجليزية، ويتكيف مع شاشات الهواتف، ويمكن استخدامه دون اتصال بعد فتحه أول مرة عبر الإنترنت.",
       "هذا تقويم موسمي إقليمي تقليدي، وليس توقعًا مباشرًا للطقس. وقد تختلف الرؤية الفعلية بالعين عن نموذج الفجر الهندسي بنحو يوم بسبب الغبار والتضاريس وحالة الأفق المحلي.",
     ],
@@ -1481,100 +1482,64 @@ function StarMarkerMap({
   mansion: Mansion;
   mansionIndex: number;
 }) {
-  const marker = MANSION_MARKERS[mansionIndex];
-  const projected = projectMarkerToSvg(marker);
+  const { sample, pattern } = starGroupSampleFor(mansionIndex);
+  const highlighted = new Set<number>(sample.highlighted);
   const titleId = `star-map-title-${mansionIndex}`;
-  const clusterOffsets = [
-    [-5, -2, 1.15], [-2, 3, 1], [1, -4, 1.3], [4, 2, .9],
-    [6, -3, .8], [-6, 4, .75], [0, 1, 1.4], [3, 5, .7],
-  ] as const;
 
   return (
     <figure className="mini-star-map">
-      <svg viewBox={`0 0 ${projected.width} ${projected.height}`} role="img" aria-labelledby={titleId}>
+      <svg viewBox="0 0 160 94" role="img" aria-labelledby={titleId}>
         <title id={titleId}>
           {skyMarkerName(mansion, language)} · {COPY[language].schematicMap}
         </title>
-        <rect
-          className="mini-star-map-bg"
-          x="0.5"
-          y="0.5"
-          width={projected.width - 1}
-          height={projected.height - 1}
-          rx="9"
-        />
+        <rect className="mini-star-map-bg" x="0.5" y="0.5" width="159" height="93" rx="9" />
         <g className="mini-star-map-dust" aria-hidden="true">
           <circle cx="14" cy="16" r="0.8" /><circle cx="147" cy="13" r="0.6" />
           <circle cx="17" cy="75" r="0.6" /><circle cx="145" cy="79" r="0.8" />
           <circle cx="128" cy="11" r="0.45" /><circle cx="92" cy="82" r="0.55" />
           <circle cx="11" cy="45" r="0.45" /><circle cx="151" cy="43" r="0.5" />
         </g>
-        <rect
-          className="ecliptic-band"
-          x="1"
-          y={projected.eclipticBand.topY}
-          width={projected.width - 2}
-          height={projected.eclipticBand.bottomY - projected.eclipticBand.topY}
-        />
-        <line
-          className="ecliptic-line"
-          x1="1"
-          x2={projected.width - 1}
-          y1={projected.eclipticLineY}
-          y2={projected.eclipticLineY}
-        />
-        <text className="ecliptic-label" x="6" y={Math.max(8, projected.eclipticBand.topY - 2)}>
-          {language === "ar" ? "مسار البروج" : "ECLIPTIC"}
-        </text>
         <g className="mini-star-map-links" aria-hidden="true">
-          {projected.links.map((link) => (
-            <line
-              key={`${link.from}-${link.to}`}
-              x1={link.x1}
-              y1={link.y1}
-              x2={link.x2}
-              y2={link.y2}
-            />
-          ))}
+          {pattern.links.map(([from, to]) => {
+            const start = pattern.stars[from];
+            const end = pattern.stars[to];
+            if (!start || !end) return null;
+            return (
+              <line
+                key={`${from}-${to}`}
+                x1={start[0]}
+                y1={start[1]}
+                x2={end[0]}
+                y2={end[1]}
+              />
+            );
+          })}
         </g>
         <g aria-hidden="true">
-          {projected.stars.map((star) => {
-            const active = star.role !== "fiducial";
+          {pattern.stars.map(([x, y, radius = 1.8], index) => {
+            const active = highlighted.has(index);
             return (
               <g
-                key={star.memberIndex}
+                key={`${x}-${y}`}
                 className={active ? "related-star active" : "related-star"}
-                opacity={active ? 1 : .38}
               >
                 {active && (
-                  <circle className="related-star-halo" cx={star.x} cy={star.y} r={star.radius + 5} />
+                  <circle className="related-star-halo" cx={x} cy={y} r={radius + 5} />
                 )}
-                {star.role === "cluster-centre" ? (
-                  clusterOffsets.map(([dx, dy, radius], index) => (
-                    <circle
-                      className="related-star-point"
-                      cx={star.x + dx}
-                      cy={star.y + dy}
-                      key={index}
-                      r={radius}
-                    />
-                  ))
-                ) : (
-                  <circle
-                    className="related-star-point"
-                    cx={star.x}
-                    cy={star.y}
-                    r={star.radius + (active ? .65 : 0)}
-                  />
-                )}
+                <circle
+                  className="related-star-point"
+                  cx={x}
+                  cy={y}
+                  r={active ? radius + 1.25 : radius}
+                />
               </g>
             );
           })}
-          {projected.emptySectorCentre && (
+          {sample.emptyCentre && (
             <g className="empty-field-marker">
-              <circle cx={projected.emptySectorCentre.x} cy={projected.emptySectorCentre.y} r="9" />
+              <circle cx={sample.emptyCentre[0]} cy={sample.emptyCentre[1]} r="9" />
               <path
-                d={`M ${projected.emptySectorCentre.x - 4} ${projected.emptySectorCentre.y} h 8 M ${projected.emptySectorCentre.x} ${projected.emptySectorCentre.y - 4} v 8`}
+                d={`M ${sample.emptyCentre[0] - 4} ${sample.emptyCentre[1]} h 8 M ${sample.emptyCentre[0]} ${sample.emptyCentre[1] - 4} v 8`}
               />
             </g>
           )}
