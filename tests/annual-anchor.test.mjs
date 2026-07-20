@@ -16,6 +16,7 @@ test("2026 regional Day 1 anchors match the versioned dawn proxy", () => {
     Object.fromEntries(
       [
         "gulf",
+        "saudi",
         "sudan",
         "australia_tropical",
         "australia_central",
@@ -24,6 +25,7 @@ test("2026 regional Day 1 anchors match the versioned dawn proxy", () => {
     ),
     {
       gulf: "2026-05-12",
+      saudi: "2026-05-12",
       sudan: "2026-05-10",
       australia_tropical: "2026-05-12",
       australia_central: "2026-05-14",
@@ -102,6 +104,7 @@ test("the neutral classical profile keeps its explicitly fixed reference date", 
 test("all regional annual intervals remain representable from 2020 through 2030", () => {
   for (const regionId of [
     "gulf",
+    "saudi",
     "sudan",
     "australia_tropical",
     "australia_central",

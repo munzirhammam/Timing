@@ -1,5 +1,6 @@
 export type OutlookRegionId =
   | "gulf"
+  | "saudi"
   | "sudan"
   | "australia_tropical"
   | "australia_central"
@@ -631,6 +632,7 @@ const CLASSICAL_OUTLOOKS: MansionOutlook[] = Array.from({ length: 28 }, () => ({
 
 export const OUTLOOKS: Record<OutlookRegionId, MansionOutlook[]> = {
   gulf: GULF_OUTLOOKS,
+  saudi: GULF_OUTLOOKS,
   sudan: SUDAN_OUTLOOKS,
   australia_tropical: australiaOutlooks("tropical"),
   australia_central: australiaOutlooks("central"),

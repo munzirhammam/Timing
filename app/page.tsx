@@ -11,11 +11,21 @@ import {
   type AnchorRegionId,
   type CalendarCycleDate,
   type RegionalAnchorProfile,
-  type RegionalObserver,
 } from "./annual-anchor";
 import { MANSION_MARKERS } from "./mansion-catalogue";
 import { OUTLOOK_ICONS, OUTLOOKS, type MansionOutlook } from "./outlooks";
 import { OUTLOOKS_AR } from "./outlooks-ar";
+import {
+  DEFAULT_SAUDI_OUTLOOK_AREA,
+  SAUDI_OUTLOOK_AREAS,
+  SAUDI_OUTLOOK_AREA_IDS,
+  SAUDI_TRADITIONAL_NAMES_AR,
+  isSaudiCoordinate,
+  isSaudiOutlookAreaId,
+  localizeSaudiOutlook,
+  saudiOutlookAreaForCoordinates,
+  type SaudiOutlookAreaId,
+} from "./saudi-region";
 import { starGroupSampleFor } from "./star-map-context";
 
 type RegionId = AnchorRegionId;
@@ -51,6 +61,8 @@ type RegionProfile = {
   referenceNameAr: string;
   description: string;
   descriptionAr: string;
+  markerNameMode?: "localized" | "english";
+  traditionalNameMode?: "localized" | "arabic";
   mansions: Mansion[];
 };
 
@@ -188,6 +200,15 @@ const CLASSICAL_MANSIONS = mansionSet([
   ["Al-Fargh Al-Mu'akhkhar", "الفرغ المؤخر"], ["Al-Risha'", "الرشاء"],
 ]);
 
+const SAUDI_MANSIONS = mansionSet(
+  SAUDI_TRADITIONAL_NAMES_AR.map((nameAr, index) => [
+    CLASSICAL_MANSIONS[index]?.en ?? nameAr,
+    nameAr,
+    index === 9 ? "Historic Arabic mansion · 14 days" : "Historic Arabic mansion",
+    index === 9 ? "اسم المنزلة العربية التراثي · 14 يومًا" : "اسم المنزلة العربية التراثي",
+  ]),
+);
+
 function australiaMansions(zone: string, zoneAr: string): Mansion[] {
   return CLASSICAL_MANSIONS.map((mansion, index) => ({
     ...mansion,
@@ -213,6 +234,21 @@ const REGION_PROFILES: Record<RegionId, RegionProfile> = {
     description: "The annual Day 1 dawn calculation uses Dubai as the Arabian Gulf reference point.",
     descriptionAr: "يستخدم حساب فجر اليوم الأول السنوي دبي نقطةً مرجعية للخليج العربي.",
     mansions: GULF_MANSIONS,
+  },
+  saudi: {
+    id: "saudi",
+    label: "Saudi Arabia",
+    labelAr: "المملكة العربية السعودية",
+    shortLabel: "Saudi Arabia",
+    shortLabelAr: "السعودية",
+    timeZone: REGIONAL_ANCHOR_PROFILES.saudi.timeZone,
+    referenceName: "Riyadh",
+    referenceNameAr: "الرياض",
+    description: "Saudi Arabia uses one Riyadh-based annual Day 1 alignment; exact coordinates select the local outlook area.",
+    descriptionAr: "تستخدم السعودية محاذاة سنوية واحدة لليوم الأول بمرجع الرياض، وتحدد الإحداثيات الدقيقة نطاق الدلالة المحلية.",
+    markerNameMode: "english",
+    traditionalNameMode: "arabic",
+    mansions: SAUDI_MANSIONS,
   },
   sudan: {
     id: "sudan",
@@ -301,6 +337,8 @@ const COPY = {
     useMyLocation: "Use my regional location",
     locating: "Locating…",
     regionalTradition: "Regional tradition",
+    localOutlookArea: "Local outlook area",
+    localOutlookHelp: "Exact coordinates select an outlook area without changing Saudi Arabia’s shared mansion alignment.",
     dayOneReference: "Calculated Day 1",
     annualAnchor: "Annual dawn anchor",
     referencePoint: "Reference point",
@@ -345,7 +383,7 @@ const COPY = {
     cycleDay: "Cycle day",
     jabhaOnly: "The Leo Forehead period—traditional Al‑Jabha—is the only 14-day station.",
     regionalCycle: "Regional cycle",
-    cycleExplanation: "The selected observer recalculates Day 1 each year. The following stations then keep the fixed 13-day sequence, with Al‑Jabha at 14 days.",
+    cycleExplanation: "The selected alignment region recalculates Day 1 each year. The following stations then keep the fixed 13-day sequence, with Al‑Jabha at 14 days.",
     traditionalIndication: "Regional seasonal indication",
     outlookTitle: "REGIONAL STAR-STATION OUTLOOK",
     landWater: "Land & water",
@@ -380,6 +418,8 @@ const COPY = {
     useMyLocation: "استخدام موقعي الإقليمي",
     locating: "جارٍ تحديد الموقع…",
     regionalTradition: "التقليد الإقليمي",
+    localOutlookArea: "نطاق الدلالة المحلية",
+    localOutlookHelp: "تحدد الإحداثيات الدقيقة نطاق الدلالة دون تغيير محاذاة المنازل المشتركة في السعودية.",
     dayOneReference: "اليوم الأول المحسوب",
     annualAnchor: "مرساة الفجر السنوية",
     referencePoint: "النقطة المرجعية",
@@ -424,7 +464,7 @@ const COPY = {
     cycleDay: "يوم الدورة",
     jabhaOnly: "فترة مجموعة جبهة الأسد — الجبهة تقليديًا — هي المحطة الوحيدة الممتدة 14 يومًا.",
     regionalCycle: "الدورة الإقليمية",
-    cycleExplanation: "يُعاد حساب اليوم الأول سنويًا وفق موقع الراصد المختار، ثم تتبع المحطات تسلسلها الثابت من 13 يومًا، مع 14 يومًا للجبهة.",
+    cycleExplanation: "يُعاد حساب اليوم الأول سنويًا وفق إقليم المحاذاة المختار، ثم تتبع المحطات تسلسلها الثابت من 13 يومًا، مع 14 يومًا للجبهة.",
     traditionalIndication: "الدلالة الموسمية الإقليمية",
     outlookTitle: "الدلالة الإقليمية لمحطات النجوم",
     landWater: "الأرض والمياه",
@@ -447,10 +487,10 @@ const ABOUT_COPY = {
     title: "Lunar Mansions Calendar",
     paragraphs: [
       "This interactive calendar presents the 28 traditional star stations as a continuous regional seasonal cycle. These stations were historically called “lunar mansions” because their marker stars and star groups are arranged along and around the ecliptic. The app itself does not calculate the Moon’s current position or phases.",
-      "Each regional cycle begins with Aries Horns—Al‑Sharatain. Day 1 is recalculated every year using a geometric estimate of when this marker first becomes visible in the eastern sky shortly before sunrise, known as a heliacal-rising proxy. The calculation uses the selected region’s reference coordinates or the user’s location. Actual visibility can vary with atmospheric conditions, weather, and the local horizon.",
+      "Each regional cycle begins with Aries Horns—Al‑Sharatain. Day 1 is recalculated every year using a geometric estimate of when this marker first becomes visible in the eastern sky shortly before sunrise, known as a heliacal-rising proxy. The calculation uses the selected alignment region’s reference coordinates. A new alignment region is used only when latitude materially shifts the regional anchor or makes the standard dawn marker unsuitable. Actual visibility can vary with atmospheric conditions, weather, and the local horizon.",
       "The fixed calendar structure is always preserved: twenty-seven stations contain 13 days, while Leo Forehead—Al‑Jabha contains 14 days, producing 365 station days.",
-      "Every region uses the same 28 traditional marker groups in the same order. Selecting a region changes the annual alignment, displayed regional names, and seasonal outlook; it does not replace the traditional markers with unrelated stars. The Gregorian monthly table shows every date with its marker group, regional mansion name, station day, small star-group map, and regional seasonal outlook.",
-      "The calendar covers the Arabian Gulf, Sudan, and three Australian regions. The same method can support future regions by adding local coordinates, timezone, names, and seasonal information. It adapts to mobile screens, and remains available offline after the first visit.",
+      "Every region uses the same 28 traditional marker groups in the same order. Selecting a cultural region changes the displayed traditional names, while an alignment region controls Day 1 and an exact user location can select the local seasonal outlook. The Gregorian monthly table shows every date with its marker group, regional mansion name, station day, small star-group map, and regional seasonal outlook.",
+      "The calendar covers the Arabian Gulf, Saudi Arabia, Sudan, and three Australian alignment regions. The same method can support future regions by adding only the alignment, cultural names and location-based outlook information that differ. It adapts to mobile screens, and remains available offline after the first visit.",
       "This is a traditional seasonal guide—not a live weather forecast or a guarantee of actual naked-eye visibility.",
     ],
   },
@@ -458,10 +498,10 @@ const ABOUT_COPY = {
     title: "تقويم العِينات الإقليمي",
     paragraphs: [
       "تقويم تفاعلي يعرض المنازل النجمية التقليدية الثمانية والعشرين ضمن دورة موسمية إقليمية متصلة. وقد عُرفت هذه المنازل تاريخيًا باسم «المنازل القمرية» لأن النجوم والمجموعات النجمية الدالة عليها مرتبة على امتداد نطاق مدار وحوله، وهو النطاق المرتبط بالمسارين الظاهريين للشمس والقمر في السماء. ولا يحسب التطبيق موقع القمر الآني أو أطواره.",
-      "تبدأ كل دورة إقليمية بقرني الحمل — الشرطين. ويُعاد حساب اليوم الأول في كل سنة استنادًا إلى تقدير هندسي لموعد أول ظهور لهذه العلامة في السماء الشرقية بعد الفجر قبيل الشروق. يستخدم الحساب إحداثيات الموقع المرجعي للإقليم المختار أو موقع المستخدم. وقد يختلف الظهور الفعلي باختلاف صفاء الجو والطقس والأفق المحلي.",
+      "تبدأ كل دورة إقليمية بقرني الحمل — الشرطين. ويُعاد حساب اليوم الأول في كل سنة استنادًا إلى تقدير هندسي لموعد أول ظهور لهذه العلامة في السماء الشرقية بعد الفجر قبيل الشروق. يستخدم الحساب إحداثيات الموقع المرجعي لإقليم المحاذاة المختار. ولا يُنشأ إقليم محاذاة جديد إلا عندما يؤدي اختلاف خط العرض إلى انزياح مهم في المرساة الإقليمية أو يجعل علامة الفجر القياسية غير مناسبة. وقد يختلف الظهور الفعلي باختلاف صفاء الجو والطقس والأفق المحلي.",
       "يبقى نظام الدورة ثابتًا دائمًا: تمتد سبع وعشرون منزلة لمدة 13 يومًا، بينما تمتد منزلة الجبهة لمدة 14 يومًا، ليكون المجموع 365 يومًا للمنازل.",
-      "تستخدم جميع الأقاليم العلامات النجمية الثمانية والعشرين نفسها وبالترتيب التقليدي نفسه. ويغيّر اختيار الإقليم محاذاة بداية الدورة، والأسماء الإقليمية المعروضة، والدلالة الموسمية، لكنه لا يستبدل العلامات التقليدية بنجوم غير مرتبطة بها. يعرض جدول الشهر الميلادي كل تاريخ مع مجموعة النجوم الدالة عليه، واسم المنزلة الإقليمي، ويوم المنزلة، وخريطة مصغرة لمجموعة النجوم، والدلالة الموسمية الإقليمية.",
-      "يشمل التقويم الخليج العربي والسودان وثلاثة أقاليم في أستراليا. ويمكن تطبيق المنهج نفسه على أقاليم مستقبلية بإضافة الإحداثيات المحلية والمنطقة الزمنية والأسماء والمعلومات الموسمية. يتكيف التطبيق مع شاشات الهواتف، ويظل متاحًا دون اتصال بعد الزيارة الأولى.",
+      "تستخدم جميع الأقاليم العلامات النجمية الثمانية والعشرين نفسها وبالترتيب التقليدي نفسه. ويغيّر اختيار الإقليم الثقافي الأسماء التراثية المعروضة، بينما يتحكم إقليم المحاذاة في اليوم الأول، ويمكن لموقع المستخدم الدقيق تحديد الدلالة الموسمية المحلية. يعرض جدول الشهر الميلادي كل تاريخ مع مجموعة النجوم الدالة عليه، واسم المنزلة الإقليمي، ويوم المنزلة، وخريطة مصغرة لمجموعة النجوم، والدلالة الموسمية الإقليمية.",
+      "يشمل التقويم الخليج العربي والمملكة العربية السعودية والسودان وثلاثة أقاليم محاذاة في أستراليا. ويمكن تطبيق المنهج نفسه على أقاليم مستقبلية بإضافة ما يختلف فقط من المحاذاة والأسماء الثقافية ومعلومات الدلالة المرتبطة بالموقع. يتكيف التطبيق مع شاشات الهواتف، ويظل متاحًا دون اتصال بعد الزيارة الأولى.",
       "هذا دليل موسمي تراثي، وليس توقعًا مباشرًا للطقس أو ضمانًا للرؤية الفعلية بالعين المجردة.",
     ],
   },
@@ -476,12 +516,19 @@ function profileLabel(profile: RegionProfile, language: Language, short = false)
   return short ? profile.shortLabel : profile.label;
 }
 
-function mansionName(mansion: Mansion, language: Language) {
+function mansionName(mansion: Mansion, language: Language, profile?: RegionProfile) {
+  if (profile?.traditionalNameMode === "arabic") return mansion.ar;
   return language === "ar" ? mansion.ar : mansion.en;
 }
 
-function skyMarkerName(mansion: Mansion, language: Language) {
+function skyMarkerName(mansion: Mansion, language: Language, profile?: RegionProfile) {
+  if (profile?.markerNameMode === "english") return mansion.starEn;
   return language === "ar" ? mansion.starAr : mansion.starEn;
+}
+
+function saudiOutlookAreaLabel(areaId: SaudiOutlookAreaId, language: Language) {
+  const area = SAUDI_OUTLOOK_AREAS[areaId];
+  return language === "ar" ? area.labelAr : area.label;
 }
 
 function constellationName(mansion: Mansion, language: Language) {
@@ -532,7 +579,8 @@ function todayIsoForTimeZone(timeZone: string) {
 
 function regionFromTimeZone(timeZone: string): RegionId {
   if (/Khartoum|Juba/i.test(timeZone)) return "sudan";
-  if (/Dubai|Muscat|Riyadh|Bahrain|Qatar|Kuwait|Aden/i.test(timeZone)) return "gulf";
+  if (/Asia\/Riyadh/i.test(timeZone)) return "saudi";
+  if (/Dubai|Muscat|Bahrain|Qatar|Kuwait|Aden/i.test(timeZone)) return "gulf";
   if (/Australia\/(Darwin)|Indian\/(Christmas|Cocos)/i.test(timeZone)) return "australia_tropical";
   if (/Australia\/(Brisbane|Broken_Hill|Eucla)|Pacific\/Norfolk/i.test(timeZone)) return "australia_central";
   if (/Australia\/(Sydney|Melbourne|Hobart|Adelaide|Perth|Lord_Howe)|Antarctica\/Macquarie/i.test(timeZone)) {
@@ -542,6 +590,7 @@ function regionFromTimeZone(timeZone: string): RegionId {
 }
 
 function regionFromCoordinates(latitude: number, longitude: number): RegionId {
+  if (isSaudiCoordinate(latitude, longitude)) return "saudi";
   if (latitude >= 4 && latitude <= 23.5 && longitude >= 21 && longitude <= 39.5) return "sudan";
   if (latitude >= 12 && latitude <= 34 && longitude >= 34 && longitude <= 60) return "gulf";
   const isAustralianArea =
@@ -566,11 +615,10 @@ function regionalCalendarDateForDate(
   dateMs: number,
   anchorProfile: RegionalAnchorProfile | RegionId,
   correctionDays: number,
-  observer: RegionalObserver | undefined,
   mansions: Mansion[],
 ): CalendarDate {
   const dateIso = toIsoDate(dateMs);
-  const mapped = calendarDateForIso(dateIso, anchorProfile, correctionDays, observer);
+  const mapped = calendarDateForIso(dateIso, anchorProfile, correctionDays);
   if (mapped.kind === "alignment") return { ...mapped, dateMs };
 
   return {
@@ -609,7 +657,7 @@ export default function Home() {
   const [language, setLanguage] = useState<Language>("en");
   const [regionId, setRegionId] = useState<RegionId>("gulf");
   const [anchorCorrections, setAnchorCorrections] = useState<Partial<Record<RegionId, number>>>({});
-  const [observerOverride, setObserverOverride] = useState<RegionalObserver>();
+  const [saudiOutlookAreaId, setSaudiOutlookAreaId] = useState<SaudiOutlookAreaId>(DEFAULT_SAUDI_OUTLOOK_AREA);
   const [timeZone, setTimeZone] = useState(REGION_PROFILES.gulf.timeZone);
   const [locationSource, setLocationSource] = useState<LocationSource>({ kind: "default" });
   const [locationMessage, setLocationMessage] = useState<LocationMessage>("");
@@ -626,15 +674,12 @@ export default function Home() {
   const copy = COPY[language];
   const mansions = profile.mansions;
   const mansionOffsets = useMemo(() => offsetsFor(mansions), [mansions]);
-  const anchorProfile = useMemo<RegionalAnchorProfile>(() => ({
-    ...REGIONAL_ANCHOR_PROFILES[regionId],
-    timeZone,
-  }), [regionId, timeZone]);
+  const anchorProfile: RegionalAnchorProfile = REGIONAL_ANCHOR_PROFILES[regionId];
   const correctionDays = anchorCorrections[regionId] ?? 0;
   const todayIso = todayIsoForTimeZone(timeZone);
   const viewAnchor = useMemo(
-    () => annualAnchor(anchorProfile, viewYear, correctionDays, observerOverride),
-    [anchorProfile, correctionDays, observerOverride, viewYear],
+    () => annualAnchor(anchorProfile, viewYear, correctionDays),
+    [anchorProfile, correctionDays, viewYear],
   );
   const anchorIso = viewAnchor.isoDate;
 
@@ -651,6 +696,7 @@ export default function Home() {
           ? storedRegionValue as RegionId
           : zoneRegion;
       const storedTimeZone = window.localStorage.getItem("lunar-mansion-timezone");
+      const storedSaudiOutlookArea = window.localStorage.getItem("lunar-mansion-saudi-outlook-area");
       const storedCorrections = window.localStorage.getItem("seasonal-star-anchor-corrections");
       const activeZone = storedTimeZone || detectedZone;
       const nextToday = todayIsoForTimeZone(activeZone);
@@ -661,6 +707,11 @@ export default function Home() {
         ? storedLanguage
         : navigator.language.toLowerCase().startsWith("ar") ? "ar" : "en");
       setRegionId(detectedRegion);
+      setSaudiOutlookAreaId(
+        isSaudiOutlookAreaId(storedSaudiOutlookArea)
+          ? storedSaudiOutlookArea
+          : DEFAULT_SAUDI_OUTLOOK_AREA,
+      );
       if (storedCorrections) {
         try {
           const parsed = JSON.parse(storedCorrections) as Record<string, unknown>;
@@ -770,9 +821,8 @@ export default function Home() {
       toIsoDate(monthStart),
       anchorProfile,
       correctionDays,
-      observerOverride,
     ),
-    [anchorProfile, correctionDays, monthStart, observerOverride],
+    [anchorProfile, correctionDays, monthStart],
   );
 
   const rows = useMemo(() => {
@@ -784,7 +834,6 @@ export default function Home() {
         dateMs,
         anchorProfile,
         correctionDays,
-        observerOverride,
         mansions,
       );
       const key = info.kind === "alignment"
@@ -804,7 +853,7 @@ export default function Home() {
 
       const mansion = mansions[rowInfo.mansionIndex];
       const startMs =
-        parseIsoDate(annualAnchorIso(anchorProfile, rowInfo.cycleYear, correctionDays, observerOverride)) +
+        parseIsoDate(annualAnchorIso(anchorProfile, rowInfo.cycleYear, correctionDays)) +
         mansionOffsets[rowInfo.mansionIndex] * DAY_MS;
       return {
         kind: "mansion",
@@ -814,7 +863,6 @@ export default function Home() {
             startMs + index * DAY_MS,
             anchorProfile,
             correctionDays,
-            observerOverride,
             mansions,
           ) as MansionDate,
         ),
@@ -823,14 +871,13 @@ export default function Home() {
         startMs,
       };
     });
-  }, [anchorProfile, correctionDays, mansionOffsets, mansions, monthEnd, monthStart, observerOverride]);
+  }, [anchorProfile, correctionDays, mansionOffsets, mansions, monthEnd, monthStart]);
 
   const selectedDateMs = parseIsoDate(selectedIso);
   const selectedDay = regionalCalendarDateForDate(
     selectedDateMs,
     anchorProfile,
     correctionDays,
-    observerOverride,
     mansions,
   );
   const selectedCycleStart = parseIsoDate(selectedDay.dayOneIso);
@@ -846,11 +893,14 @@ export default function Home() {
   const selectedOutlookSource = selectedMansionIndex !== null
     ? OUTLOOKS[regionId][selectedMansionIndex]
     : null;
-  const selectedOutlook: MansionOutlook | null = selectedOutlookSource && selectedMansionIndex !== null
+  const selectedRegionalOutlook: MansionOutlook | null = selectedOutlookSource && selectedMansionIndex !== null
     ? language === "ar"
       ? { ...selectedOutlookSource, ...OUTLOOKS_AR[regionId][selectedMansionIndex] }
       : selectedOutlookSource
     : null;
+  const selectedOutlook = selectedRegionalOutlook && selectedMansionIndex !== null && regionId === "saudi"
+    ? localizeSaudiOutlook(selectedRegionalOutlook, selectedMansionIndex, saudiOutlookAreaId, language)
+    : selectedRegionalOutlook;
   const nextMansionIndex = selectedDay.kind === "mansion"
     ? (selectedDay.mansionIndex + 1) % mansions.length
     : 0;
@@ -859,9 +909,15 @@ export default function Home() {
     ? parseIsoDate(selectedDay.nextDayOneIso)
     : (selectedMansionEnd ?? selectedDateMs) + DAY_MS;
   const nextOutlookSource = OUTLOOKS[regionId][nextMansionIndex];
-  const nextOutlook = language === "ar"
+  const nextRegionalOutlook = language === "ar"
     ? { ...nextOutlookSource, ...OUTLOOKS_AR[regionId][nextMansionIndex] }
     : nextOutlookSource;
+  const nextOutlook = regionId === "saudi"
+    ? localizeSaudiOutlook(nextRegionalOutlook, nextMansionIndex, saudiOutlookAreaId, language)
+    : nextRegionalOutlook;
+  const outlookProfileLabel = regionId === "saudi"
+    ? `${profileLabel(profile, language)} · ${saudiOutlookAreaLabel(saudiOutlookAreaId, language)}`
+    : profileLabel(profile, language);
   const mansionProgress = selectedDay.kind === "mansion"
     ? Math.round((selectedDay.dayInMansion / selectedDay.mansion.days) * 100)
     : 0;
@@ -881,7 +937,6 @@ export default function Home() {
     const nextProfile = REGION_PROFILES[nextRegion];
     const activeTimeZone = nextTimeZone || nextProfile.timeZone;
     setRegionId(nextRegion);
-    setObserverOverride(undefined);
     setTimeZone(activeTimeZone);
     setLocationSource(source);
     setLocationMessage("");
@@ -889,8 +944,13 @@ export default function Home() {
     window.localStorage.setItem("lunar-mansion-timezone", activeTimeZone);
   }
 
+  function applySaudiOutlookArea(nextAreaId: SaudiOutlookAreaId) {
+    setSaudiOutlookAreaId(nextAreaId);
+    window.localStorage.setItem("lunar-mansion-saudi-outlook-area", nextAreaId);
+  }
+
   function applyAnchor(nextAnchor: string) {
-    const baseAnchor = annualAnchorIso(anchorProfile, viewYear, 0, observerOverride);
+    const baseAnchor = annualAnchorIso(anchorProfile, viewYear, 0);
     const nextCorrection = civilDaysBetween(baseAnchor, nextAnchor);
     if (!Number.isInteger(nextCorrection) || nextCorrection < -30 || nextCorrection > 30) return;
     const nextCorrections = { ...anchorCorrections, [regionId]: nextCorrection };
@@ -914,9 +974,9 @@ export default function Home() {
     setLocationMessage("");
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
+        const detectedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
         const nextRegion = regionFromCoordinates(coords.latitude, coords.longitude);
         const nextProfile = REGION_PROFILES[nextRegion];
-        const detectedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || nextProfile.timeZone;
         const activeTimeZone = regionFromTimeZone(detectedTimeZone) === nextRegion
           ? detectedTimeZone
           : nextProfile.timeZone;
@@ -925,11 +985,9 @@ export default function Home() {
           { kind: "coordinates", value: `${coords.latitude.toFixed(2)}°, ${coords.longitude.toFixed(2)}°` },
           activeTimeZone,
         );
-        setObserverOverride({
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          elevationMeters: Number.isFinite(coords.altitude) ? coords.altitude ?? 0 : 0,
-        });
+        if (nextRegion === "saudi") {
+          applySaudiOutlookArea(saudiOutlookAreaForCoordinates(coords.latitude, coords.longitude));
+        }
         setLocating(false);
       },
       () => {
@@ -1070,9 +1128,26 @@ export default function Home() {
               </select>
             </label>
 
+            {regionId === "saudi" && (
+              <label>
+                <span>{copy.localOutlookArea}</span>
+                <select
+                  value={saudiOutlookAreaId}
+                  onChange={(event) => applySaudiOutlookArea(event.currentTarget.value as SaudiOutlookAreaId)}
+                >
+                  {SAUDI_OUTLOOK_AREA_IDS.map((areaId) => (
+                    <option value={areaId} key={areaId}>
+                      {saudiOutlookAreaLabel(areaId, language)}
+                    </option>
+                  ))}
+                </select>
+                <small>{copy.localOutlookHelp}</small>
+              </label>
+            )}
+
             <label>
               <span>
-                {skyMarkerName(mansions[0], language)} · {copy.dayOneReference} · {formatNumber(viewYear, language)}
+                {skyMarkerName(mansions[0], language, profile)} · {copy.dayOneReference} · {formatNumber(viewYear, language)}
               </span>
               <input
                 type="date"
@@ -1083,9 +1158,7 @@ export default function Home() {
               />
             </label>
             <p>
-              <strong>{copy.referencePoint}: {observerOverride
-                ? `${observerOverride.latitude.toFixed(2)}°, ${observerOverride.longitude.toFixed(2)}°`
-                : language === "ar" ? profile.referenceNameAr : profile.referenceName}</strong>
+              <strong>{copy.referencePoint}: {language === "ar" ? profile.referenceNameAr : profile.referenceName}</strong>
               <br />
               {language === "ar" ? profile.descriptionAr : profile.description} {copy.correctionNote}
             </p>
@@ -1165,7 +1238,7 @@ export default function Home() {
             <span><b>⌖</b>{profileLabel(profile, language)}</span>
             <span><b>◷</b>{timeZone}</span>
             <span>
-              <b>◇</b>{copy.annualAnchor}: {skyMarkerName(mansions[0], language)} {copy.dayOne} · {formatShortDate(parseIsoDate(monthCycleAnchors.dayOneIso), language)}
+              <b>◇</b>{copy.annualAnchor}: {skyMarkerName(mansions[0], language, profile)} {copy.dayOne} · {formatShortDate(parseIsoDate(monthCycleAnchors.dayOneIso), language)}
               {correctionDays !== 0 ? ` · ${copy.dayCorrection} ${formatNumber(correctionDays, language)}` : ""}
             </span>
             <span className={`connection-indicator ${!isOnline ? "offline" : offlineReady ? "ready" : ""}`}>
@@ -1224,9 +1297,9 @@ export default function Home() {
                   <div className="mansion-name-cell" role="rowheader">
                     <span className="mansion-index">{formatNumber(row.mansionIndex + 1, language, 2)}</span>
                     <div>
-                      <strong>{skyMarkerName(row.mansion, language)}</strong>
+                      <strong>{skyMarkerName(row.mansion, language, profile)}</strong>
                       <span className="traditional-name">
-                        {mansionName(row.mansion, language)}
+                        {mansionName(row.mansion, language, profile)}
                       </span>
                       <small>{formatShortDate(row.startMs, language)} – {formatShortDate(row.startMs + (row.mansion.days - 1) * DAY_MS, language)}</small>
                     </div>
@@ -1244,6 +1317,7 @@ export default function Home() {
                         viewYear={viewYear}
                         onSelect={selectDate}
                         language={language}
+                        profile={profile}
                       />
                     );
                   })}
@@ -1257,6 +1331,7 @@ export default function Home() {
                       viewYear={viewYear}
                       onSelect={selectDate}
                       language={language}
+                      profile={profile}
                       extra
                     />
                   ) : (
@@ -1298,11 +1373,11 @@ export default function Home() {
                     <span>{formatNumber(selectedDay.mansionIndex + 1, language, 2)}</span>
                     <div>
                       <p>{profileLabel(profile, language)} {copy.regionMansion}</p>
-                      <h3>{skyMarkerName(selectedDay.mansion, language)}</h3>
+                      <h3>{skyMarkerName(selectedDay.mansion, language, profile)}</h3>
                     </div>
                   </div>
                   <p className="sky-marker-meta">
-                    <span><b>{copy.traditionalMansion}</b>{mansionName(selectedDay.mansion, language)}</span>
+                    <span><b>{copy.traditionalMansion}</b>{mansionName(selectedDay.mansion, language, profile)}</span>
                     <span><b>{copy.constellation}</b>{constellationName(selectedDay.mansion, language)}</span>
                   </p>
                   {selectedDay.mansion.localNote && (
@@ -1389,11 +1464,11 @@ export default function Home() {
         <section className={`outlook-card tone-${selectedOutlook.tone}`} aria-label={copy.outlookTitle} aria-live="polite">
           <div className="outlook-heading">
             <div>
-              <p className="eyebrow">{copy.traditionalIndication} · {profileLabel(profile, language)}</p>
+              <p className="eyebrow">{copy.traditionalIndication} · {outlookProfileLabel}</p>
               <h2>{copy.outlookTitle}</h2>
             </div>
             <div className="outlook-badges">
-              <span>{skyMarkerName(selectedDay.mansion, language)}</span>
+              <span>{skyMarkerName(selectedDay.mansion, language, profile)}</span>
               <span>{copy.day} {formatNumber(selectedDay.dayInMansion, language)}/{formatNumber(selectedDay.mansion.days, language)}</span>
             </div>
           </div>
@@ -1425,8 +1500,8 @@ export default function Home() {
             <aside className="next-outlook">
               <small>{copy.nextMansion}</small>
               <div>
-                <strong>{skyMarkerName(nextMansion, language)}</strong>
-                <b>{mansionName(nextMansion, language)}</b>
+                <strong>{skyMarkerName(nextMansion, language, profile)}</strong>
+                <b>{mansionName(nextMansion, language, profile)}</b>
               </div>
               <span>{formatShortDate(nextMansionStart, language)}</span>
               <p>{nextOutlook.title}</p>
@@ -1458,8 +1533,8 @@ export default function Home() {
               <aside className="next-outlook">
                 <small>{copy.nextMansion}</small>
                 <div>
-                  <strong>{skyMarkerName(nextMansion, language)}</strong>
-                  <b>{mansionName(nextMansion, language)}</b>
+                  <strong>{skyMarkerName(nextMansion, language, profile)}</strong>
+                  <b>{mansionName(nextMansion, language, profile)}</b>
                 </div>
                 <span>{formatShortDate(nextMansionStart, language)}</span>
                 <p>{nextOutlook.title}</p>
@@ -1490,7 +1565,7 @@ function StarMarkerMap({
     <figure className="mini-star-map">
       <svg viewBox="0 0 160 94" role="img" aria-labelledby={titleId}>
         <title id={titleId}>
-          {skyMarkerName(mansion, language)} · {COPY[language].schematicMap}
+          {COPY[language].schematicMap}
         </title>
         <rect className="mini-star-map-bg" x="0.5" y="0.5" width="159" height="93" rx="9" />
         <g className="mini-star-map-dust" aria-hidden="true">
@@ -1562,6 +1637,7 @@ function DateCell({
   todayIso,
   viewMonth,
   viewYear,
+  profile,
 }: {
   day: MansionDate;
   extra?: boolean;
@@ -1571,14 +1647,15 @@ function DateCell({
   todayIso: string;
   viewMonth: number;
   viewYear: number;
+  profile: RegionProfile;
 }) {
   const date = new Date(day.dateMs);
   const inMonth = date.getUTCFullYear() === viewYear && date.getUTCMonth() === viewMonth;
   const weekday = new Intl.DateTimeFormat(localeFor(language), { weekday: "short", timeZone: "UTC" }).format(date).toUpperCase();
   const month = new Intl.DateTimeFormat(localeFor(language), { month: "short", timeZone: "UTC" }).format(date).toUpperCase();
   const ariaLabel = language === "ar"
-    ? `${formatFullDate(day.dateMs, language)}، ${day.mansion.starAr}، المنزل التقليدي ${day.mansion.ar}، اليوم ${formatNumber(day.dayInMansion, language)} من الفترة`
-    : `${formatFullDate(day.dateMs, language)}, ${day.mansion.starEn}, traditional mansion ${day.mansion.en}, period day ${day.dayInMansion}`;
+    ? `${formatFullDate(day.dateMs, language)}، ${skyMarkerName(day.mansion, language, profile)}، المنزل التقليدي ${mansionName(day.mansion, language, profile)}، اليوم ${formatNumber(day.dayInMansion, language)} من الفترة`
+    : `${formatFullDate(day.dateMs, language)}, ${skyMarkerName(day.mansion, language, profile)}, traditional mansion ${mansionName(day.mansion, language, profile)}, period day ${day.dayInMansion}`;
 
   return (
     <button

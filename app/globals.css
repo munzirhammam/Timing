@@ -316,6 +316,7 @@ button { color: inherit; }
 .settings-heading h2 { font-family: Georgia, serif; font-size: 22px; font-weight: 500; margin: 3px 0 0; }
 .settings-heading button { background: transparent; border: 0; color: #8390a1; cursor: pointer; font-size: 25px; }
 .settings-popover label, .date-jump { display: grid; gap: 7px; }
+.settings-popover label small { color: #95a2b3; font-size: 13px; line-height: 1.45; }
 .settings-popover label span, .date-jump span, .month-picker span {
   color: #8f9bad;
   font-size: 11px;

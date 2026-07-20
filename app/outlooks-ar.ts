@@ -552,6 +552,7 @@ const CLASSICAL_OUTLOOK_AR: MansionOutlookCopy = {
 
 export const OUTLOOKS_AR: Record<OutlookRegionId, MansionOutlookCopy[]> = {
   gulf: GULF_OUTLOOKS_AR,
+  saudi: GULF_OUTLOOKS_AR,
   sudan: SUDAN_OUTLOOKS_AR,
   australia_tropical: australiaOutlooksAr("tropical"),
   australia_central: australiaOutlooksAr("central"),

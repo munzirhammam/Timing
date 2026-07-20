@@ -48,6 +48,7 @@ export const FIRST_MARKER_STARS = Object.freeze({
 
 export type AnchorRegionId =
   | "gulf"
+  | "saudi"
   | "sudan"
   | "australia_tropical"
   | "australia_central"
@@ -85,6 +86,15 @@ export const REGIONAL_ANCHOR_PROFILES: Readonly<
     id: "gulf",
     timeZone: "Asia/Dubai",
     observer: Object.freeze({ latitude: 25.2048, longitude: 55.2708, elevationMeters: 0 }),
+    policy: Object.freeze({
+      kind: "heliacal-proxy",
+      criterionId: HELIACAL_PROXY.id,
+    }),
+  }),
+  saudi: Object.freeze({
+    id: "saudi",
+    timeZone: "Asia/Riyadh",
+    observer: Object.freeze({ latitude: 24.7136, longitude: 46.6753, elevationMeters: 612 }),
     policy: Object.freeze({
       kind: "heliacal-proxy",
       criterionId: HELIACAL_PROXY.id,
