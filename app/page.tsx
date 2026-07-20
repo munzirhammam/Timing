@@ -38,6 +38,11 @@ type SkyMarker = Pick<
   "starEn" | "starAr" | "designation" | "constellationEn" | "constellationAr"
 >;
 
+type StarMapPattern = {
+  stars: ReadonlyArray<readonly [x: number, y: number, radius?: number]>;
+  links: ReadonlyArray<readonly [from: number, to: number]>;
+};
+
 type RegionProfile = {
   id: RegionId;
   label: string;
@@ -74,37 +79,141 @@ const MANSION_LENGTHS = Array.from({ length: 28 }, (_, index) => (index === 9 ? 
 const GULF_ANCHOR_ISO = "2026-05-12";
 
 const SKY_MARKERS: SkyMarker[] = [
-  { starEn: "Sheratan–Mesarthim Pair", starAr: "زوج شيراتان وميسارثيم", designation: "β–γ Arietis", constellationEn: "Aries", constellationAr: "الحمل" },
-  { starEn: "Aries Belly Stars", starAr: "نجوم بطن الحمل", designation: "δ–ε Arietis", constellationEn: "Aries", constellationAr: "الحمل" },
-  { starEn: "Pleiades Cluster", starAr: "عنقود الثريا", designation: "M45", constellationEn: "Taurus", constellationAr: "الثور" },
-  { starEn: "Aldebaran", starAr: "نجم الدبران", designation: "α Tauri", constellationEn: "Taurus", constellationAr: "الثور" },
-  { starEn: "Meissa–Phi Orionis Group", starAr: "مجموعة ميسا وفاي الجبار", designation: "λ, φ¹, φ² Orionis", constellationEn: "Orion", constellationAr: "الجبار" },
-  { starEn: "Gamma–Xi Geminorum Pair", starAr: "زوج غاما وإكساي التوأمين", designation: "γ–ξ Geminorum", constellationEn: "Gemini", constellationAr: "التوأمان" },
-  { starEn: "Castor–Pollux Pair", starAr: "زوج كاستور وبولوكس", designation: "α–β Geminorum", constellationEn: "Gemini", constellationAr: "التوأمان" },
-  { starEn: "Beehive Cluster", starAr: "عنقود خلية النحل", designation: "M44", constellationEn: "Cancer", constellationAr: "السرطان" },
-  { starEn: "Cancer–Leo Eye Pair", starAr: "زوج عين الأسد بين السرطان والأسد", designation: "κ Cancri · λ Leonis", constellationEn: "Cancer–Leo", constellationAr: "السرطان والأسد" },
-  { starEn: "Leo Forehead Asterism", starAr: "مجموعة نجوم جبهة الأسد", designation: "ζ, γ, η, α Leonis", constellationEn: "Leo", constellationAr: "الأسد" },
-  { starEn: "Zosma–Chertan Pair", starAr: "زوج زوسما وشرتان", designation: "δ–θ Leonis", constellationEn: "Leo", constellationAr: "الأسد" },
-  { starEn: "Denebola", starAr: "نجم ذنب الأسد", designation: "β Leonis", constellationEn: "Leo", constellationAr: "الأسد" },
-  { starEn: "Virgo Arc Asterism", starAr: "قوس نجوم العذراء", designation: "β, η, γ, δ, ε Virginis", constellationEn: "Virgo", constellationAr: "العذراء" },
-  { starEn: "Spica", starAr: "نجم السنبلة", designation: "α Virginis", constellationEn: "Virgo", constellationAr: "العذراء" },
-  { starEn: "Virgo Veil Trio", starAr: "ثلاثي نجوم العذراء", designation: "ι, κ, λ Virginis", constellationEn: "Virgo", constellationAr: "العذراء" },
-  { starEn: "Libra Balance Pair", starAr: "زوج كفتي الميزان", designation: "α–β Librae", constellationEn: "Libra", constellationAr: "الميزان" },
-  { starEn: "Scorpion Crown Trio", starAr: "ثلاثي إكليل العقرب", designation: "β, δ, π Scorpii", constellationEn: "Scorpius", constellationAr: "العقرب" },
-  { starEn: "Antares", starAr: "نجم قلب العقرب", designation: "α Scorpii", constellationEn: "Scorpius", constellationAr: "العقرب" },
-  { starEn: "Shaula–Lesath Pair", starAr: "زوج الشولة ولسعة", designation: "λ–υ Scorpii", constellationEn: "Scorpius", constellationAr: "العقرب" },
-  { starEn: "Sagittarius Eight-Star Group", starAr: "مجموعة نجوم القوس الثمانية", designation: "γ, δ, ε, η, ρ, φ, τ, ζ Sagittarii", constellationEn: "Sagittarius", constellationAr: "القوس" },
-  { starEn: "Pi Sagittarii & Star-Poor Field", starAr: "باي القوس والحقل قليل النجوم", designation: "π Sagittarii · sparse field", constellationEn: "Sagittarius", constellationAr: "القوس" },
-  { starEn: "Dabih Pair", starAr: "زوج الذابح", designation: "α–β Capricorni", constellationEn: "Capricornus", constellationAr: "الجدي" },
-  { starEn: "Mu–Nu Aquarii Pair", starAr: "زوج ميو ونيو الدلو", designation: "μ–ν Aquarii", constellationEn: "Aquarius", constellationAr: "الدلو" },
-  { starEn: "Sadalsuud–Xi Aquarii Pair", starAr: "زوج سعد السعود وإكساي الدلو", designation: "β–ξ Aquarii", constellationEn: "Aquarius", constellationAr: "الدلو" },
-  { starEn: "Sadachbia Group", starAr: "مجموعة سعد الأخبية", designation: "γ, ζ, η, π Aquarii", constellationEn: "Aquarius", constellationAr: "الدلو" },
-  { starEn: "Markab–Scheat Pair", starAr: "زوج المركب ومنكب الفرس", designation: "α–β Pegasi", constellationEn: "Pegasus", constellationAr: "الفرس الأعظم" },
-  { starEn: "Algenib–Alpheratz Pair", starAr: "زوج الجنب وسرة الفرس", designation: "γ Pegasi · α Andromedae", constellationEn: "Pegasus–Andromeda", constellationAr: "الفرس الأعظم والمرأة المسلسلة" },
-  { starEn: "Mirach", starAr: "نجم المراق", designation: "β Andromedae", constellationEn: "Andromeda", constellationAr: "المرأة المسلسلة" },
+  { starEn: "Aries Horns", starAr: "قرنا الحمل", designation: "β–γ Arietis", constellationEn: "Aries", constellationAr: "الحمل" },
+  { starEn: "Aries Belly", starAr: "بطن الحمل", designation: "δ, ε, π Arietis", constellationEn: "Aries", constellationAr: "الحمل" },
+  { starEn: "Taurus Pleiades", starAr: "ثريا الثور", designation: "M45", constellationEn: "Taurus", constellationAr: "الثور" },
+  { starEn: "Taurus Eye", starAr: "عين الثور", designation: "α Tauri", constellationEn: "Taurus", constellationAr: "الثور" },
+  { starEn: "Orion Head", starAr: "رأس الجبار", designation: "λ, φ¹, φ² Orionis", constellationEn: "Orion", constellationAr: "الجبار" },
+  { starEn: "Gemini Feet", starAr: "قدما التوأمين", designation: "γ–ξ Geminorum", constellationEn: "Gemini", constellationAr: "التوأمان" },
+  { starEn: "Gemini Twin Stars", starAr: "نجما التوأمين", designation: "α–β Geminorum", constellationEn: "Gemini", constellationAr: "التوأمان" },
+  { starEn: "Cancer Beehive", starAr: "خلية نحل السرطان", designation: "M44 · γ–δ Cancri", constellationEn: "Cancer", constellationAr: "السرطان" },
+  { starEn: "Leo Eyes", starAr: "عينا الأسد", designation: "λ Leonis · faint Cancer star", constellationEn: "Leo", constellationAr: "الأسد" },
+  { starEn: "Leo Forehead", starAr: "جبهة الأسد", designation: "ζ, γ, η, α Leonis", constellationEn: "Leo", constellationAr: "الأسد" },
+  { starEn: "Leo Mane", starAr: "لبدة الأسد", designation: "δ–θ Leonis", constellationEn: "Leo", constellationAr: "الأسد" },
+  { starEn: "Leo Tail", starAr: "ذيل الأسد", designation: "β Leonis", constellationEn: "Leo", constellationAr: "الأسد" },
+  { starEn: "Virgo Star Arc", starAr: "قوس نجوم العذراء", designation: "β, η, γ, δ, ε Virginis", constellationEn: "Virgo", constellationAr: "العذراء" },
+  { starEn: "Virgo Wheat Ear", starAr: "سنبلة العذراء", designation: "α Virginis", constellationEn: "Virgo", constellationAr: "العذراء" },
+  { starEn: "Virgo Faint Trio", starAr: "ثلاثي العذراء الخافت", designation: "ι, κ, λ Virginis", constellationEn: "Virgo", constellationAr: "العذراء" },
+  { starEn: "Libra Scales", starAr: "كفّتا الميزان", designation: "α–β Librae", constellationEn: "Libra", constellationAr: "الميزان" },
+  { starEn: "Scorpius Head", starAr: "رأس العقرب", designation: "β, δ, π Scorpii", constellationEn: "Scorpius", constellationAr: "العقرب" },
+  { starEn: "Scorpius Heart", starAr: "قلب العقرب", designation: "α Scorpii", constellationEn: "Scorpius", constellationAr: "العقرب" },
+  { starEn: "Scorpius Tail", starAr: "ذيل العقرب", designation: "λ–υ Scorpii", constellationEn: "Scorpius", constellationAr: "العقرب" },
+  { starEn: "Sagittarius Teapot", starAr: "إبريق القوس", designation: "γ, δ, ε, η, φ, ζ, τ, σ Sagittarii", constellationEn: "Sagittarius", constellationAr: "القوس" },
+  { starEn: "Sagittarius Empty Field", starAr: "الفراغ في القوس", designation: "ξ, ο, π, 43, ρ, υ Sagittarii · empty centre", constellationEn: "Sagittarius", constellationAr: "القوس" },
+  { starEn: "Capricornus Head", starAr: "رأس الجدي", designation: "α–β Capricorni", constellationEn: "Capricornus", constellationAr: "الجدي" },
+  { starEn: "Aquarius West Pair", starAr: "زوج الدلو الغربي", designation: "ε–μ Aquarii", constellationEn: "Aquarius", constellationAr: "الدلو" },
+  { starEn: "Aquarius Middle Pair", starAr: "زوج الدلو الأوسط", designation: "β–ξ Aquarii", constellationEn: "Aquarius", constellationAr: "الدلو" },
+  { starEn: "Aquarius Water Jar", starAr: "جرة ماء الدلو", designation: "γ, π, ζ, η Aquarii", constellationEn: "Aquarius", constellationAr: "الدلو" },
+  { starEn: "Pegasus West Side", starAr: "ضلع الفرس الأعظم الغربي", designation: "α–β Pegasi", constellationEn: "Pegasus", constellationAr: "الفرس الأعظم" },
+  { starEn: "Pegasus East Side", starAr: "ضلع الفرس الأعظم الشرقي", designation: "γ Pegasi · α Andromedae", constellationEn: "Pegasus", constellationAr: "الفرس الأعظم" },
+  { starEn: "Andromeda Mirach", starAr: "ميراخ في المرأة المسلسلة", designation: "β Andromedae", constellationEn: "Andromeda", constellationAr: "المرأة المسلسلة" },
 ];
 
-if (SKY_MARKERS.length !== 28 || MANSION_LENGTHS.reduce((sum, days) => sum + days, 0) !== 365) {
+const STAR_MAP_PATTERNS = {
+  aries: {
+    stars: [[24, 26, 2.8], [47, 20, 2.5], [73, 34, 2.2], [103, 47, 1.9], [136, 54, 1.6]],
+    links: [[0, 1], [1, 2], [2, 3], [3, 4]],
+  },
+  taurus: {
+    stars: [[22, 20, 1.8], [45, 34, 2], [69, 52, 3], [94, 37, 1.8], [120, 23, 1.7], [111, 57, 1.5], [121, 53, 1.8], [130, 60, 1.4], [124, 68, 1.5], [138, 67, 1.3], [143, 56, 1.2]],
+    links: [[0, 1], [1, 2], [2, 3], [3, 4], [5, 6], [6, 7], [6, 8], [7, 10], [8, 9]],
+  },
+  orion: {
+    stars: [[70, 12, 2.6], [58, 21, 1.8], [81, 22, 1.8], [33, 35, 2.4], [112, 34, 2.5], [55, 49, 1.8], [75, 48, 1.9], [96, 47, 1.8], [43, 76, 2.4], [108, 75, 2.3]],
+    links: [[0, 1], [0, 2], [1, 3], [2, 4], [3, 5], [5, 6], [6, 7], [7, 4], [5, 8], [7, 9]],
+  },
+  gemini: {
+    stars: [[43, 16, 3], [91, 15, 3.2], [48, 34, 2], [91, 33, 2], [42, 52, 1.8], [88, 51, 1.8], [28, 75, 2.2], [57, 76, 2], [77, 75, 2], [106, 73, 2.2]],
+    links: [[0, 1], [0, 2], [1, 3], [2, 4], [3, 5], [4, 6], [4, 7], [5, 8], [5, 9]],
+  },
+  cancer: {
+    stars: [[78, 15, 2], [77, 33, 1.8], [52, 52, 1.8], [101, 51, 1.9], [65, 59, 1.2], [75, 55, 1.5], [84, 62, 1.2], [91, 56, 1.4], [119, 73, 1.8], [35, 74, 1.7]],
+    links: [[0, 1], [1, 2], [1, 3], [2, 9], [3, 8], [4, 5], [5, 6], [5, 7]],
+  },
+  leo: {
+    stars: [[29, 20, 2], [43, 30, 2.2], [35, 45, 2], [51, 55, 2.8], [71, 38, 2.3], [89, 50, 2.4], [111, 43, 1.9], [126, 57, 1.8], [144, 51, 3]],
+    links: [[0, 1], [1, 2], [2, 3], [3, 4], [1, 4], [4, 5], [5, 6], [6, 7], [7, 8]],
+  },
+  virgo: {
+    stars: [[24, 24, 1.8], [45, 17, 1.9], [64, 29, 2.2], [83, 20, 1.8], [101, 31, 2], [116, 49, 1.8], [93, 72, 3.2], [137, 63, 1.7]],
+    links: [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5], [5, 6], [5, 7]],
+  },
+  libra: {
+    stars: [[79, 13, 1.7], [48, 32, 3], [109, 31, 3], [58, 58, 2], [99, 58, 2], [79, 77, 1.7]],
+    links: [[0, 1], [0, 2], [1, 3], [2, 4], [3, 5], [4, 5]],
+  },
+  scorpius: {
+    stars: [[35, 19, 2.4], [52, 28, 2.7], [70, 20, 2.3], [69, 39, 1.8], [77, 50, 3.4], [89, 57, 1.9], [104, 63, 1.8], [120, 70, 1.8], [137, 64, 2.6], [145, 51, 2.4]],
+    links: [[0, 1], [1, 2], [1, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9]],
+  },
+  sagittarius: {
+    stars: [[27, 52, 1.8], [44, 32, 2], [62, 43, 2.2], [78, 24, 2.4], [93, 42, 2.2], [113, 31, 2], [125, 51, 2.1], [103, 65, 1.9], [61, 70, 2.6]],
+    links: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 2], [2, 8]],
+  },
+  baldah: {
+    stars: [[23, 23, 1.7], [53, 16, 2], [91, 19, 1.7], [133, 31, 2.1], [139, 65, 1.8], [101, 76, 2], [56, 78, 1.7], [20, 60, 1.9]],
+    links: [],
+  },
+  capricornus: {
+    stars: [[26, 25, 2.8], [46, 20, 2.5], [75, 36, 1.8], [105, 28, 1.9], [136, 42, 2.2], [112, 68, 2], [72, 73, 1.8], [41, 61, 1.9]],
+    links: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 0]],
+  },
+  aquarius: {
+    stars: [[22, 26, 2.5], [44, 31, 2.2], [65, 22, 1.7], [82, 36, 1.8], [104, 25, 3], [126, 36, 2.1], [81, 53, 1.8], [95, 58, 1.7], [87, 70, 1.8], [106, 69, 1.6], [139, 58, 1.7]],
+    links: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 10], [3, 6], [6, 7], [7, 8], [7, 9]],
+  },
+  pegasus: {
+    stars: [[30, 18, 2.8], [123, 18, 2.8], [124, 69, 2.8], [31, 69, 2.8], [77, 31, 1.5], [84, 54, 1.6]],
+    links: [[0, 1], [1, 2], [2, 3], [3, 0], [0, 4], [4, 5], [5, 2]],
+  },
+  andromeda: {
+    stars: [[23, 62, 2.1], [49, 49, 2.2], [77, 35, 3], [106, 26, 2], [137, 16, 1.8], [99, 57, 1.6]],
+    links: [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5]],
+  },
+} satisfies Record<string, StarMapPattern>;
+
+type StarMapPatternKey = keyof typeof STAR_MAP_PATTERNS;
+
+const STAR_MAP_MARKERS: Array<{
+  pattern: StarMapPatternKey;
+  highlighted: number[];
+  emptyCentre?: readonly [x: number, y: number];
+}> = [
+  { pattern: "aries", highlighted: [0, 1] },
+  { pattern: "aries", highlighted: [2, 3, 4] },
+  { pattern: "taurus", highlighted: [5, 6, 7, 8, 9, 10] },
+  { pattern: "taurus", highlighted: [2] },
+  { pattern: "orion", highlighted: [0, 1, 2] },
+  { pattern: "gemini", highlighted: [6, 7] },
+  { pattern: "gemini", highlighted: [0, 1] },
+  { pattern: "cancer", highlighted: [4, 5, 6, 7] },
+  { pattern: "leo", highlighted: [1] },
+  { pattern: "leo", highlighted: [0, 1, 2, 3] },
+  { pattern: "leo", highlighted: [4, 5] },
+  { pattern: "leo", highlighted: [8] },
+  { pattern: "virgo", highlighted: [0, 1, 2, 3, 4] },
+  { pattern: "virgo", highlighted: [6] },
+  { pattern: "virgo", highlighted: [5, 6, 7] },
+  { pattern: "libra", highlighted: [1, 2] },
+  { pattern: "scorpius", highlighted: [0, 1, 2] },
+  { pattern: "scorpius", highlighted: [4] },
+  { pattern: "scorpius", highlighted: [8, 9] },
+  { pattern: "sagittarius", highlighted: [0, 1, 2, 3, 4, 5, 6, 7] },
+  { pattern: "baldah", highlighted: [], emptyCentre: [79, 47] },
+  { pattern: "capricornus", highlighted: [0, 1] },
+  { pattern: "aquarius", highlighted: [0, 1] },
+  { pattern: "aquarius", highlighted: [4, 5] },
+  { pattern: "aquarius", highlighted: [6, 7, 8, 9] },
+  { pattern: "pegasus", highlighted: [0, 3] },
+  { pattern: "pegasus", highlighted: [1, 2] },
+  { pattern: "andromeda", highlighted: [2] },
+];
+
+if (
+  SKY_MARKERS.length !== 28 ||
+  STAR_MAP_MARKERS.length !== 28 ||
+  MANSION_LENGTHS.reduce((sum, days) => sum + days, 0) !== 365
+) {
   throw new Error("The star-station cycle must contain 28 markers and total 365 days.");
 }
 
@@ -239,8 +348,8 @@ const REGION_PROFILES: Record<RegionId, RegionProfile> = {
     shortLabelAr: "الشمال المداري",
     anchorIso: "2026-05-13",
     timeZone: "Australia/Darwin",
-    description: "Tropical North reference: the Sheratan–Mesarthim marker begins near its traditional first dawn appearance. Reference coordinates: Darwin.",
-    descriptionAr: "مرجع الشمال المداري: تبدأ علامة شيراتان–ميسارثيم قرب أول ظهور تقليدي لها عند الفجر. إحداثيات المرجع: داروين.",
+    description: "Tropical North reference: Aries Horns begins near its traditional first dawn appearance. Reference coordinates: Darwin.",
+    descriptionAr: "مرجع الشمال المداري: تبدأ علامة قرني الحمل قرب أول ظهور تقليدي لها عند الفجر. إحداثيات المرجع: داروين.",
     mansions: AUSTRALIA_TROPICAL_MANSIONS,
   },
   australia_central: {
@@ -251,8 +360,8 @@ const REGION_PROFILES: Record<RegionId, RegionProfile> = {
     shortLabelAr: "وسط أستراليا",
     anchorIso: "2026-05-14",
     timeZone: "Australia/Darwin",
-    description: "Subtropical and central reference: the Sheratan–Mesarthim marker begins near its traditional first dawn appearance. Reference coordinates: Alice Springs.",
-    descriptionAr: "مرجع الوسط وشبه المداري: تبدأ علامة شيراتان–ميسارثيم قرب أول ظهور تقليدي لها عند الفجر. إحداثيات المرجع: أليس سبرينغز.",
+    description: "Subtropical and central reference: Aries Horns begins near its traditional first dawn appearance. Reference coordinates: Alice Springs.",
+    descriptionAr: "مرجع الوسط وشبه المداري: تبدأ علامة قرني الحمل قرب أول ظهور تقليدي لها عند الفجر. إحداثيات المرجع: أليس سبرينغز.",
     mansions: AUSTRALIA_CENTRAL_MANSIONS,
   },
   australia_temperate: {
@@ -263,8 +372,8 @@ const REGION_PROFILES: Record<RegionId, RegionProfile> = {
     shortLabelAr: "الجنوب المعتدل",
     anchorIso: "2026-05-17",
     timeZone: "Australia/Sydney",
-    description: "Temperate South reference: the Sheratan–Mesarthim marker begins near its traditional first dawn appearance. Reference latitude: 35° south.",
-    descriptionAr: "مرجع الجنوب المعتدل: تبدأ علامة شيراتان–ميسارثيم قرب أول ظهور تقليدي لها عند الفجر. خط العرض المرجعي: 35° جنوبًا.",
+    description: "Temperate South reference: Aries Horns begins near its traditional first dawn appearance. Reference latitude: 35° south.",
+    descriptionAr: "مرجع الجنوب المعتدل: تبدأ علامة قرني الحمل قرب أول ظهور تقليدي لها عند الفجر. خط العرض المرجعي: 35° جنوبًا.",
     mansions: AUSTRALIA_TEMPERATE_MANSIONS,
   },
   classical: {
@@ -347,6 +456,7 @@ const COPY = {
     designation: "Star designation",
     constellation: "Constellation",
     dawnReference: "Dawn alignment reference",
+    schematicMap: "Related stars · schematic view",
     visibilityNote: "The listed star or group is the traditional sky marker for this 13-day period. Dawn visibility is approximate; clouds, terrain, twilight and exact coordinates affect observation.",
   },
   ar: {
@@ -414,6 +524,7 @@ const COPY = {
     designation: "التعيين النجمي",
     constellation: "الكوكبة",
     dawnReference: "مرجع محاذاة الفجر",
+    schematicMap: "النجوم المرتبطة · رسم توضيحي",
     visibilityNote: "النجم أو المجموعة المدرجة هي علامة السماء التقليدية لهذه الفترة ذات 13 يومًا. الرؤية عند الفجر تقريبية؛ إذ تؤثر السحب والتضاريس والشفق والإحداثيات الدقيقة في الرصد.",
   },
 } as const;
@@ -1067,23 +1178,32 @@ export default function Home() {
           </article>
 
           <article className="mansion-card">
-            <div className="mansion-card-title">
-              <span>{formatNumber(selectedDay.mansionIndex + 1, language, 2)}</span>
-              <div>
-                <p>{profileLabel(profile, language)} {copy.regionMansion}</p>
-                <h3>{skyMarkerName(selectedDay.mansion, language)}</h3>
+            <div className="mansion-card-overview">
+              <div className="mansion-card-copy">
+                <div className="mansion-card-title">
+                  <span>{formatNumber(selectedDay.mansionIndex + 1, language, 2)}</span>
+                  <div>
+                    <p>{profileLabel(profile, language)} {copy.regionMansion}</p>
+                    <h3>{skyMarkerName(selectedDay.mansion, language)}</h3>
+                  </div>
+                  <b dir="ltr">{selectedDay.mansion.designation}</b>
+                </div>
+                <p className="sky-marker-meta">
+                  <span><b>{copy.traditionalMansion}</b>{mansionName(selectedDay.mansion, language)}</span>
+                  <span><b>{copy.constellation}</b>{constellationName(selectedDay.mansion, language)}</span>
+                </p>
+                {selectedDay.mansion.localNote && (
+                  <p className="local-name-note">
+                    {language === "ar" ? selectedDay.mansion.localNoteAr || selectedDay.mansion.localNote : selectedDay.mansion.localNote}
+                  </p>
+                )}
               </div>
-              <b dir="ltr">{selectedDay.mansion.designation}</b>
+              <StarMarkerMap
+                mansion={selectedDay.mansion}
+                mansionIndex={selectedDay.mansionIndex}
+                language={language}
+              />
             </div>
-            <p className="sky-marker-meta">
-              <span><b>{copy.traditionalMansion}</b>{mansionName(selectedDay.mansion, language)}</span>
-              <span><b>{copy.constellation}</b>{constellationName(selectedDay.mansion, language)}</span>
-            </p>
-            {selectedDay.mansion.localNote && (
-              <p className="local-name-note">
-                {language === "ar" ? selectedDay.mansion.localNoteAr || selectedDay.mansion.localNote : selectedDay.mansion.localNote}
-              </p>
-            )}
             <dl>
               <div>
                 <dt>{copy.dayInMansion}</dt>
@@ -1177,6 +1297,70 @@ export default function Home() {
 
       </section>
     </main>
+  );
+}
+
+function StarMarkerMap({
+  language,
+  mansion,
+  mansionIndex,
+}: {
+  language: Language;
+  mansion: Mansion;
+  mansionIndex: number;
+}) {
+  const marker = STAR_MAP_MARKERS[mansionIndex];
+  const pattern = STAR_MAP_PATTERNS[marker.pattern];
+  const highlighted = new Set(marker.highlighted);
+  const titleId = `star-map-title-${mansionIndex}`;
+
+  return (
+    <figure className="mini-star-map">
+      <svg viewBox="0 0 160 94" role="img" aria-labelledby={titleId}>
+        <title id={titleId}>
+          {skyMarkerName(mansion, language)} · {COPY[language].schematicMap}
+        </title>
+        <rect className="mini-star-map-bg" x="0.5" y="0.5" width="159" height="93" rx="9" />
+        <g className="mini-star-map-dust" aria-hidden="true">
+          <circle cx="14" cy="16" r="0.8" /><circle cx="147" cy="13" r="0.6" />
+          <circle cx="17" cy="75" r="0.6" /><circle cx="145" cy="79" r="0.8" />
+          <circle cx="128" cy="11" r="0.45" /><circle cx="92" cy="82" r="0.55" />
+          <circle cx="11" cy="45" r="0.45" /><circle cx="151" cy="43" r="0.5" />
+        </g>
+        <g className="mini-star-map-links" aria-hidden="true">
+          {pattern.links.map(([from, to]) => (
+            <line
+              key={`${from}-${to}`}
+              x1={pattern.stars[from][0]}
+              y1={pattern.stars[from][1]}
+              x2={pattern.stars[to][0]}
+              y2={pattern.stars[to][1]}
+            />
+          ))}
+        </g>
+        <g aria-hidden="true">
+          {pattern.stars.map(([x, y, radius = 1.8], index) => {
+            const active = highlighted.has(index);
+            return (
+              <g key={`${x}-${y}`} className={active ? "related-star active" : "related-star"}>
+                {active && <circle className="related-star-halo" cx={x} cy={y} r={radius + 5} />}
+                <circle className="related-star-point" cx={x} cy={y} r={active ? radius + 1.25 : radius} />
+              </g>
+            );
+          })}
+          {marker.emptyCentre && (
+            <g className="empty-field-marker">
+              <circle cx={marker.emptyCentre[0]} cy={marker.emptyCentre[1]} r="9" />
+              <path d={`M ${marker.emptyCentre[0] - 4} ${marker.emptyCentre[1]} h 8 M ${marker.emptyCentre[0]} ${marker.emptyCentre[1] - 4} v 8`} />
+            </g>
+          )}
+        </g>
+      </svg>
+      <figcaption>
+        <strong>{constellationName(mansion, language)}</strong>
+        <span>{COPY[language].schematicMap}</span>
+      </figcaption>
+    </figure>
   );
 }
 
