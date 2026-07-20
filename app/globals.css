@@ -853,8 +853,13 @@ button { color: inherit; }
   .next-outlook { grid-column: auto; }
   .detail-grid { display: flex; flex-direction: column; }
   .detail-grid > article { min-height: 0; }
-  .mansion-card-overview { gap: 12px; grid-template-columns: minmax(0, 1fr) 118px; }
-  .mini-star-map { width: 118px; }
+  .mansion-card-overview { gap: 16px; grid-template-columns: 1fr; }
+  .mini-star-map {
+    justify-self: center;
+    max-width: 240px;
+    width: 100%;
+  }
+  .mini-star-map figcaption { align-items: center; text-align: center; }
   .mini-star-map figcaption span, .sky-marker-meta b { font-size: 12px; }
   .sky-marker-meta, .local-name-note { margin-inline-start: 0; }
   .mansion-card dl { grid-template-columns: 1fr 1fr; }
@@ -902,8 +907,8 @@ button { color: inherit; }
   .outlook-signal { font-size: 22px; height: 44px; width: 44px; }
   .detail-grid > article { padding: 17px; }
   .selected-card h2 { font-size: 26px; }
-  .mansion-card-overview { gap: 10px; grid-template-columns: minmax(0, 1fr) 105px; }
-  .mini-star-map { width: 105px; }
+  .mansion-card-overview { gap: 14px; grid-template-columns: 1fr; }
+  .mini-star-map { max-width: 230px; width: 100%; }
   .mini-star-map figcaption strong { font-size: 12px; }
   .mini-star-map figcaption span { font-size: 12px; }
   .mansion-card-title { grid-template-columns: 32px minmax(0, 1fr); }
