@@ -1,6 +1,6 @@
 {
-  "name": "Regional Seasonal Star Calendar · تقويم النجوم الموسمية الإقليمي",
-  "short_name": "Seasonal Stars · النجوم",
+  "name": "Lunar Mansions Calendar · تقويم العِينات الإقليمي",
+  "short_name": "Lunar Mansions · العِينات",
   "description": "A bilingual 28-station seasonal calendar with annually recalculated regional dawn alignment. تقويم موسمي ثنائي اللغة بمحاذاة فجر إقليمية تُحسب سنويًا.",
   "start_url": "./",
   "scope": "./",

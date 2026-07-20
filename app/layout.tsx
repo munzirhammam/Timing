@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Seasonal Star Calendar | تقويم النجوم الموسمية",
+  title: "Lunar Mansions Calendar | تقويم العِينات الإقليمي",
   description:
     "An offline-capable bilingual calendar of 28 traditional star stations with annually recalculated regional dawn alignment. تقويم ثنائي اللغة لمحطات النجوم مع محاذاة فجر إقليمية تُحسب سنويًا.",
   manifest: "/manifest.webmanifest",
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Seasonal Stars · النجوم الموسمية",
+    title: "Lunar Mansions Calendar · تقويم العِينات الإقليمي",
   },
 };
 

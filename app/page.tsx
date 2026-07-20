@@ -283,7 +283,7 @@ const REGION_PROFILES: Record<RegionId, RegionProfile> = {
 
 const COPY = {
   en: {
-    appTitle: "Seasonal Star Calendar",
+    appTitle: "Lunar Mansions Calendar",
     appSubtitle: "Regional 365-day star-station cycle · Gregorian months",
     language: "Language",
     english: "English",
@@ -362,7 +362,7 @@ const COPY = {
     visibilityNote: "The same 28 traditional markers are used in every region and identify successive ecliptic stations; some reference stars lie away from the narrow path. The annual dawn calculation is an offline geometric proxy and actual visibility may differ by about one day.",
   },
   ar: {
-    appTitle: "تقويم النجوم الموسمية",
+    appTitle: "تقويم العِينات الإقليمي",
     appSubtitle: "دورة إقليمية لمحطات النجوم من 365 يومًا · الأشهر الميلادية",
     language: "اللغة",
     english: "English",
@@ -444,25 +444,25 @@ const COPY = {
 
 const ABOUT_COPY = {
   en: {
-    title: "Regional Lunar Mansion Calendar",
+    title: "Lunar Mansions Calendar",
     paragraphs: [
-      "This bilingual interactive calendar presents the 28 traditional lunar mansions as a continuous 365-day regional seasonal cycle. Twenty-seven periods contain 13 days, while Al‑Jabha contains 14 days.",
-      "The traditional term “lunar mansions” describes 28 stellar stations along and around the ecliptic route historically associated with the Moon’s apparent path. The app uses the same audited marker sequence in every region; it does not calculate the Moon’s position or phases.",
-      "Regional Day 1 is recalculated every year from an offline dawn-visibility proxy for the two Aries Horn stars. After Day 1, the calendar preserves the conventional fixed 13-day sequence and Al‑Jabha’s 14 days. If two annual anchors are 366 dates apart, the extra date is shown separately as an unnumbered Annual Alignment Day.",
-      "The Gregorian monthly table shows every date with its related star group and regional mansion name, together with a schematic star-group sample whose mansion markers shine and a regional seasonal outlook. Reference profiles cover the Arabian Gulf, Sudan, and three Australian climate regions; the location option can use the observer’s coordinates.",
-      "The calendar works in Arabic and English, adapts to mobile screens, and remains available offline after the first online visit.",
-      "This is a traditional regional seasonal calendar—not a live weather forecast. The geometric dawn proxy can differ from actual naked-eye visibility by about one day because of haze, terrain and local horizon conditions.",
+      "This interactive calendar presents the 28 traditional star stations as a continuous regional seasonal cycle. These stations were historically called “lunar mansions” because their marker stars and star groups are arranged along and around the ecliptic. The app itself does not calculate the Moon’s current position or phases.",
+      "Each regional cycle begins with Aries Horns—Al‑Sharatain. Day 1 is recalculated every year using a geometric estimate of when this marker first becomes visible in the eastern sky shortly before sunrise, known as a heliacal-rising proxy. The calculation uses the selected region’s reference coordinates or the user’s location. Actual visibility can vary with atmospheric conditions, weather, and the local horizon.",
+      "The fixed calendar structure is always preserved: twenty-seven stations contain 13 days, while Leo Forehead—Al‑Jabha contains 14 days, producing 365 station days.",
+      "Every region uses the same 28 traditional marker groups in the same order. Selecting a region changes the annual alignment, displayed regional names, and seasonal outlook; it does not replace the traditional markers with unrelated stars. The Gregorian monthly table shows every date with its marker group, regional mansion name, station day, small star-group map, and regional seasonal outlook.",
+      "The calendar covers the Arabian Gulf, Sudan, and three Australian regions. The same method can support future regions by adding local coordinates, timezone, names, and seasonal information. It adapts to mobile screens, and remains available offline after the first visit.",
+      "This is a traditional seasonal guide—not a live weather forecast or a guarantee of actual naked-eye visibility.",
     ],
   },
   ar: {
     title: "تقويم العِينات الإقليمي",
     paragraphs: [
-      "تقويم تفاعلي ثنائي اللغة يعرض المنازل القمرية التقليدية الثمانية والعشرين ضمن دورة موسمية إقليمية متصلة مدتها 365 يومًا. تمتد سبعة وعشرون منزلة لمدة 13 يومًا، بينما تمتد منزلة الجبهة وحدها لمدة 14 يومًا.",
-      "يشير الاسم التراثي «المنازل القمرية» إلى ثماني وعشرين محطة نجمية تقع على امتداد مسار البروج وحوله، وهو المسار المرتبط تاريخيًا بالحركة الظاهرية للقمر. يستخدم التطبيق تسلسل العلامات النجمية المدقَّق نفسه في جميع المناطق، ولا يحسب موضع القمر أو أطواره.",
-      "يُعاد حساب اليوم الأول إقليميًا كل سنة بواسطة نموذج يعمل دون اتصال لظهور نجمي قرني الحمل عند الفجر. وبعد اليوم الأول يحافظ التقويم على التسلسل التقليدي الثابت من 13 يومًا، وعلى 14 يومًا للجبهة. وإذا فصل 366 تاريخًا بين مرساتين سنويتين، يظهر التاريخ الزائد منفصلًا باسم «يوم ضبط الدورة السنوي» من دون رقم.",
-      "يعرض جدول الشهر الميلادي كل تاريخ مع مجموعة النجوم المرتبطة به واسم المنزلة الإقليمي، إضافة إلى نموذج مبسط لمجموعة النجوم تتوهج فيه علامات المنزلة ودلالة موسمية. وتشمل الملفات المرجعية الخليج العربي والسودان وثلاثة أقاليم مناخية في أستراليا، ويمكن لخيار الموقع استخدام إحداثيات الراصد.",
-      "يعمل التقويم باللغتين العربية والإنجليزية، ويتكيف مع شاشات الهواتف، ويمكن استخدامه دون اتصال بعد فتحه أول مرة عبر الإنترنت.",
-      "هذا تقويم موسمي إقليمي تقليدي، وليس توقعًا مباشرًا للطقس. وقد تختلف الرؤية الفعلية بالعين عن نموذج الفجر الهندسي بنحو يوم بسبب الغبار والتضاريس وحالة الأفق المحلي.",
+      "تقويم تفاعلي يعرض المنازل النجمية التقليدية الثمانية والعشرين ضمن دورة موسمية إقليمية متصلة. وقد عُرفت هذه المنازل تاريخيًا باسم «المنازل القمرية» لأن النجوم والمجموعات النجمية الدالة عليها مرتبة على امتداد نطاق مدار وحوله، وهو النطاق المرتبط بالمسارين الظاهريين للشمس والقمر في السماء. ولا يحسب التطبيق موقع القمر الآني أو أطواره.",
+      "تبدأ كل دورة إقليمية بقرني الحمل — الشرطين. ويُعاد حساب اليوم الأول في كل سنة استنادًا إلى تقدير هندسي لموعد أول ظهور لهذه العلامة في السماء الشرقية بعد الفجر قبيل الشروق. يستخدم الحساب إحداثيات الموقع المرجعي للإقليم المختار أو موقع المستخدم. وقد يختلف الظهور الفعلي باختلاف صفاء الجو والطقس والأفق المحلي.",
+      "يبقى نظام الدورة ثابتًا دائمًا: تمتد سبع وعشرون منزلة لمدة 13 يومًا، بينما تمتد منزلة الجبهة لمدة 14 يومًا، ليكون المجموع 365 يومًا للمنازل.",
+      "تستخدم جميع الأقاليم العلامات النجمية الثمانية والعشرين نفسها وبالترتيب التقليدي نفسه. ويغيّر اختيار الإقليم محاذاة بداية الدورة، والأسماء الإقليمية المعروضة، والدلالة الموسمية، لكنه لا يستبدل العلامات التقليدية بنجوم غير مرتبطة بها. يعرض جدول الشهر الميلادي كل تاريخ مع مجموعة النجوم الدالة عليه، واسم المنزلة الإقليمي، ويوم المنزلة، وخريطة مصغرة لمجموعة النجوم، والدلالة الموسمية الإقليمية.",
+      "يشمل التقويم الخليج العربي والسودان وثلاثة أقاليم في أستراليا. ويمكن تطبيق المنهج نفسه على أقاليم مستقبلية بإضافة الإحداثيات المحلية والمنطقة الزمنية والأسماء والمعلومات الموسمية. يتكيف التطبيق مع شاشات الهواتف، ويظل متاحًا دون اتصال بعد الزيارة الأولى.",
+      "هذا دليل موسمي تراثي، وليس توقعًا مباشرًا للطقس أو ضمانًا للرؤية الفعلية بالعين المجردة.",
     ],
   },
 } as const;
