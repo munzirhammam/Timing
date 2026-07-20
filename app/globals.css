@@ -124,37 +124,41 @@ button { color: inherit; }
 }
 
 .moon-mark::before {
-  background: var(--gold-light);
-  border-radius: 50%;
-  box-shadow: 0 0 15px rgba(239, 202, 121, .28);
-  content: "";
-  height: 24px;
-  left: 8px;
+  align-items: center;
+  color: var(--gold-light);
+  content: "✦";
+  display: flex;
+  font-size: 25px;
+  height: 100%;
+  justify-content: center;
+  left: 0;
   position: absolute;
-  top: 9px;
-  width: 24px;
+  text-shadow: 0 0 14px rgba(239, 202, 121, .6);
+  top: 0;
+  width: 100%;
 }
 
 .moon-mark::after {
-  background: #06101e;
-  border-radius: 50%;
+  border: 1px solid rgba(239, 202, 121, .36);
+  border-radius: 2px;
   content: "";
-  height: 23px;
-  left: 16px;
+  height: 17px;
+  left: 12px;
   position: absolute;
-  top: 6px;
-  width: 23px;
+  top: 12px;
+  transform: rotate(45deg);
+  width: 17px;
 }
 
 .moon-mark span::before, .moon-mark span::after {
   color: var(--gold-light);
-  content: "✦";
-  font-size: 9px;
+  content: "·";
+  font-size: 14px;
   position: absolute;
-  right: 3px;
-  top: 5px;
+  right: 2px;
+  top: 1px;
 }
-.moon-mark span::after { font-size: 5px; right: 8px; top: 17px; }
+.moon-mark span::after { font-size: 12px; left: 3px; right: auto; top: 20px; }
 
 .top-actions { align-items: center; display: flex; gap: 9px; }
 
@@ -332,6 +336,7 @@ button { color: inherit; }
 }
 
 .settings-popover > p { color: #95a2b3; font-size: 13px; line-height: 1.6; margin: 0; }
+.settings-popover > p strong { color: #d4c8b3; font-weight: 600; }
 .settings-popover .location-message { color: #d7b776; }
 .reset-button, .locate-button { height: 36px; padding: 0 14px; width: 100%; }
 .locate-button:disabled { cursor: wait; opacity: .6; }
@@ -734,11 +739,41 @@ button { color: inherit; }
 .mini-star-map-bg { fill: rgba(3, 10, 20, .96); stroke: rgba(201, 164, 91, .34); }
 .mini-star-map-dust { fill: #8291a5; opacity: .55; }
 .mini-star-map-links line { stroke: #6f83a3; stroke-linecap: round; stroke-width: 1.1; }
+.ecliptic-band { fill: rgba(95, 128, 171, .1); stroke: rgba(125, 158, 201, .22); stroke-width: .6; }
+.ecliptic-line { fill: none; stroke: rgba(181, 200, 224, .52); stroke-dasharray: 3 3; stroke-width: .75; }
+.ecliptic-label { fill: #778aa4; font-size: 6px; letter-spacing: .06em; }
 .related-star-point { fill: #b5c0cf; }
 .related-star.active .related-star-point { fill: #ffe5a6; filter: drop-shadow(0 0 4px #efca79); }
 .related-star-halo { animation: related-star-pulse 2.4s ease-in-out infinite; fill: rgba(239, 202, 121, .15); stroke: rgba(239, 202, 121, .36); stroke-width: .6; transform-box: fill-box; transform-origin: center; }
 .empty-field-marker circle { fill: rgba(201, 164, 91, .08); stroke: rgba(239, 202, 121, .72); stroke-dasharray: 2 2; }
 .empty-field-marker path { fill: none; stroke: rgba(239, 202, 121, .75); stroke-linecap: round; stroke-width: .7; }
+.alignment-row { background: rgba(61, 50, 31, .28); }
+.alignment-row .mansion-name-cell { box-shadow: inset 3px 0 0 #9ab0c8; }
+[dir="rtl"] .alignment-row .mansion-name-cell { box-shadow: inset -3px 0 0 #9ab0c8; }
+.alignment-date-cell {
+  align-items: center;
+  background: linear-gradient(90deg, rgba(36, 50, 68, .72), rgba(67, 54, 31, .42));
+  border: 0;
+  color: #e8dfcf;
+  cursor: pointer;
+  display: flex;
+  font-family: Georgia, serif;
+  font-size: clamp(13px, 1.25vw, 18px);
+  gap: 10px;
+  grid-column: 2 / -1;
+  justify-content: center;
+  min-width: 0;
+  padding: 10px;
+}
+.alignment-date-cell:hover, .alignment-date-cell:focus-visible,
+.alignment-date-cell.selected { box-shadow: inset 0 0 0 2px var(--gold-light); outline: 0; }
+.alignment-date-cell.today { color: var(--gold-light); }
+.alignment-date-cell strong { font-size: inherit; font-weight: 400; }
+.alignment-date-cell span { color: #9dabbb; font-family: var(--font-geist-sans), Arial, sans-serif; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.alignment-note { color: #aeb9c7; font-size: 13px; line-height: 1.6; margin: 12px 0 0; }
+.alignment-detail-card dl { margin-top: 18px; }
+.alignment-outlook-grid { grid-template-columns: 1.65fr 1fr; }
+.alignment-outlook-grid .next-outlook { grid-column: auto; }
 .mini-star-map figcaption { align-items: flex-start; display: flex; flex-direction: column; gap: 2px; padding: 6px 3px 0; }
 .mini-star-map figcaption strong { color: #dfc88f; font-family: Georgia, serif; font-size: 12px; font-weight: 400; }
 .mini-star-map figcaption span { color: #97a5b6; font-size: 9px; line-height: 1.25; }
@@ -786,8 +821,8 @@ button { color: inherit; }
   .brand h1 { font-size: 15px; max-width: 178px; }
   .brand p { display: none; }
   .moon-mark { height: 34px; width: 34px; }
-  .moon-mark::before { height: 20px; left: 6px; top: 7px; width: 20px; }
-  .moon-mark::after { height: 19px; left: 13px; top: 5px; width: 19px; }
+  .moon-mark::before { font-size: 22px; }
+  .moon-mark::after { height: 14px; left: 9px; top: 9px; width: 14px; }
   .language-switcher button, .today-button { font-size: 12px; }
   .today-button { height: 40px; padding: 0 10px; }
   .top-actions { gap: 5px; }
@@ -807,25 +842,26 @@ button { color: inherit; }
   .settings-popover label span, .date-jump span, .month-picker span { font-size: 12px; }
   .settings-popover > p { font-size: 14px; }
   .detected-location small, .offline-status small { font-size: 12px; }
-  .alignment-strip { justify-content: center; }
+  .alignment-strip { font-size: 12px; justify-content: center; }
   .alignment-strip span:nth-child(2) { display: none; }
   .connection-indicator { margin-inline-start: 0; }
   .connection-indicator b { font-size: 11px; }
   .outlook-heading { display: grid; }
   .outlook-badges { justify-content: flex-start; }
   .outlook-grid { grid-template-columns: 1fr; }
+  .alignment-outlook-grid { grid-template-columns: 1fr; }
   .next-outlook { grid-column: auto; }
   .detail-grid { display: flex; flex-direction: column; }
   .detail-grid > article { min-height: 0; }
   .mansion-card-overview { gap: 12px; grid-template-columns: minmax(0, 1fr) 118px; }
   .mini-star-map { width: 118px; }
-  .mini-star-map figcaption span, .sky-marker-meta b { font-size: 11px; }
+  .mini-star-map figcaption span, .sky-marker-meta b { font-size: 12px; }
   .sky-marker-meta, .local-name-note { margin-inline-start: 0; }
   .mansion-card dl { grid-template-columns: 1fr 1fr; }
   .mansion-card dl > div:nth-child(2) { grid-column: span 2; grid-row: 2; }
   .outlook-lead p, .outlook-details p { font-size: 14px; }
   .next-outlook p { font-size: 15px; }
-  .outlook-disclaimer, .visibility-note, .cycle-card > p:last-child { font-size: 12px; }
+  .outlook-disclaimer, .visibility-note, .cycle-card > p:last-child { font-size: 13px; }
   .outlook-badges span, .outlook-lead > div:nth-child(2) > span,
   .outlook-details small, .next-outlook > small, .next-outlook > span { font-size: 11px; }
 }
@@ -835,8 +871,8 @@ button { color: inherit; }
   .brand { gap: 5px; }
   .brand h1 { font-size: 14px; line-height: 1.14; max-width: 118px; }
   .moon-mark { height: 30px; width: 30px; }
-  .moon-mark::before { height: 18px; left: 5px; top: 6px; width: 18px; }
-  .moon-mark::after { height: 17px; left: 11px; top: 4px; width: 17px; }
+  .moon-mark::before { font-size: 20px; }
+  .moon-mark::after { height: 13px; left: 8px; top: 8px; width: 13px; }
   .top-actions { gap: 3px; }
   .language-switcher { padding: 2px; }
   .language-switcher button { font-size: 12px; height: 36px; min-width: 34px; padding: 0 5px; }
@@ -847,17 +883,17 @@ button { color: inherit; }
   .about-heading h2 { font-size: 24px; }
   .about-heading > button { height: 34px; width: 34px; }
   .about-content { gap: 12px; margin-top: 18px; }
-  .calendar-header, .mansion-row { grid-template-columns: clamp(80px, 24vw, 96px) repeat(13, minmax(0, 1fr)) 20px; }
+  .calendar-header, .mansion-row { grid-template-columns: clamp(98px, 29vw, 112px) repeat(13, minmax(0, 1fr)) 20px; }
   .mansion-name-cell { gap: 3px; padding: 5px 4px; }
-  .mansion-index { font-size: 10px; }
-  .mansion-name-cell strong { font-size: clamp(10px, 2.9vw, 12px); line-height: 1.15; }
-  .mansion-name-cell .traditional-name { font-size: 9px; }
+  .mansion-index { font-size: 11px; }
+  .mansion-name-cell strong { font-size: clamp(11px, 3.2vw, 13px); line-height: 1.18; -webkit-line-clamp: 3; }
+  .mansion-name-cell .traditional-name { font-size: 10px; }
   .day-column-head strong, .date-cell strong { font-size: clamp(11px, 3.2vw, 14px); }
   .calendar-header { min-height: 42px; }
-  .mansion-row, .date-cell, .empty-extra-cell { min-height: 72px; }
-  .alignment-strip { font-size: 10px; gap: 6px 10px; line-height: 1.4; }
+  .mansion-row, .date-cell, .empty-extra-cell { min-height: 80px; }
+  .alignment-strip { font-size: 12px; gap: 7px 10px; line-height: 1.45; }
   .alignment-strip .connection-indicator { display: flex; }
-  .fit-note { font-size: 10px; line-height: 1.4; }
+  .fit-note { font-size: 11px; line-height: 1.4; }
   .month-heading > span { display: none; }
   .outlook-card { padding: 16px 13px; }
   .outlook-heading h2 { font-size: 22px; }
@@ -868,8 +904,8 @@ button { color: inherit; }
   .selected-card h2 { font-size: 26px; }
   .mansion-card-overview { gap: 10px; grid-template-columns: minmax(0, 1fr) 105px; }
   .mini-star-map { width: 105px; }
-  .mini-star-map figcaption strong { font-size: 11px; }
-  .mini-star-map figcaption span { font-size: 11px; }
+  .mini-star-map figcaption strong { font-size: 12px; }
+  .mini-star-map figcaption span { font-size: 12px; }
   .mansion-card-title { grid-template-columns: 32px minmax(0, 1fr); }
   .mansion-card-title > span { font-size: 11px; height: 30px; }
   .mansion-card-title h3 { font-size: 20px; }

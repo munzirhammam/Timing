@@ -1,4 +1,4 @@
-const CACHE_NAME = "seasonal-star-calendar-v6";
+const CACHE_NAME = "seasonal-star-calendar-v7";
 const BASE_URL = new URL("./", self.location.href).href;
 const appUrl = (path = "") => new URL(path, BASE_URL).href;
 const APP_SHELL = [

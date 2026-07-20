@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Seasonal Star Calendar | تقويم النجوم الموسمية",
   description:
-    "An offline-capable bilingual 365-day calendar of 28 star stations with regional dawn alignment and seasonal outlooks. تقويم ثنائي اللغة لمحطات النجوم يعمل دون اتصال.",
+    "An offline-capable bilingual calendar of 28 traditional star stations with annually recalculated regional dawn alignment. تقويم ثنائي اللغة لمحطات النجوم مع محاذاة فجر إقليمية تُحسب سنويًا.",
   manifest: "/manifest.webmanifest",
   other: {
     "codex-preview": "development",
