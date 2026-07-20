@@ -214,6 +214,26 @@ button { color: inherit; }
 .location-pill { align-items: center; border-color: rgba(201, 164, 91, .3); color: #b9c2ce; display: flex; gap: 7px; }
 .location-pill span { color: var(--gold-light); font-size: 15px; }
 
+.about-button {
+  align-items: center;
+  background: rgba(255, 255, 255, .025);
+  border: 1px solid rgba(201, 164, 91, .28);
+  border-radius: 8px;
+  color: #b9c2ce;
+  cursor: pointer;
+  display: flex;
+  font-size: 11px;
+  font-weight: 700;
+  gap: 6px;
+  height: 40px;
+  letter-spacing: .06em;
+  padding: 0 12px;
+  text-transform: uppercase;
+}
+.about-button span { color: var(--gold-light); font-size: 15px; }
+.about-button:hover, .about-button.active { background: rgba(201, 164, 91, .12); border-color: rgba(239, 202, 121, .46); color: var(--gold-light); }
+.app-shell[lang="ar"] .about-button { letter-spacing: 0; }
+
 .settings-button {
   align-items: center;
   background: transparent;
@@ -228,6 +248,64 @@ button { color: inherit; }
   width: 42px;
 }
 .settings-button.active, .settings-button:hover { color: var(--gold-light); }
+
+.about-layer { inset: 0; position: fixed; z-index: 100; }
+.about-backdrop {
+  backdrop-filter: blur(7px);
+  background: rgba(0, 4, 10, .76);
+  border: 0;
+  cursor: default;
+  inset: 0;
+  padding: 0;
+  position: absolute;
+  width: 100%;
+}
+.about-dialog {
+  background: linear-gradient(150deg, rgba(8, 23, 40, .99), rgba(3, 10, 20, .995));
+  border: 1px solid rgba(201, 164, 91, .48);
+  border-radius: 18px;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, .72), inset 0 0 70px rgba(29, 65, 97, .1);
+  left: 50%;
+  max-height: min(82vh, 720px);
+  overflow-y: auto;
+  padding: clamp(22px, 4vw, 38px);
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(680px, calc(100vw - 24px));
+  z-index: 1;
+}
+.about-heading { align-items: flex-start; display: flex; gap: 18px; justify-content: space-between; }
+.about-heading h2 {
+  color: #eadfc9;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(25px, 4vw, 36px);
+  font-weight: 400;
+  line-height: 1.16;
+  margin: 7px 0 0;
+}
+.about-heading > button {
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(201, 164, 91, .22);
+  border-radius: 50%;
+  color: #a9b3c0;
+  cursor: pointer;
+  flex: 0 0 auto;
+  font-size: 25px;
+  height: 38px;
+  line-height: 1;
+  width: 38px;
+}
+.about-heading > button:hover { border-color: rgba(239, 202, 121, .5); color: var(--gold-light); }
+.about-content { display: grid; gap: 15px; margin-top: 24px; }
+.about-content p { color: #b8c1cc; font-size: 15px; line-height: 1.75; margin: 0; }
+.about-content .about-note {
+  background: rgba(201, 164, 91, .07);
+  border: 1px solid rgba(201, 164, 91, .18);
+  border-radius: 10px;
+  color: #d3c5a8;
+  padding: 13px 15px;
+}
 
 .settings-popover {
   background: rgba(5, 14, 27, .99);
@@ -729,6 +807,9 @@ button { color: inherit; }
   .top-actions { gap: 5px; }
   .language-switcher button { min-width: 34px; padding: 0 5px; }
   .settings-button { height: 36px; width: 30px; }
+  .about-button { font-size: 12px; height: 40px; padding: 0 9px; }
+  .about-dialog { max-height: 88vh; }
+  .about-content p { font-size: 14px; line-height: 1.7; }
   .settings-popover { inset-inline: 12px; top: 58px; width: auto; }
   .workspace { min-height: auto; padding: 7px; }
   .calendar-card { border-radius: 11px; padding: 8px 4px 7px; }
@@ -774,7 +855,12 @@ button { color: inherit; }
   .language-switcher { padding: 2px; }
   .language-switcher button { font-size: 12px; height: 36px; min-width: 34px; padding: 0 5px; }
   .today-button { font-size: 12px; height: 38px; padding: 0 8px; }
+  .about-button { font-size: 11px; gap: 4px; height: 38px; padding: 0 7px; }
   .settings-button { height: 38px; width: 31px; }
+  .about-dialog { border-radius: 14px; padding: 20px 17px; width: calc(100vw - 16px); }
+  .about-heading h2 { font-size: 24px; }
+  .about-heading > button { height: 34px; width: 34px; }
+  .about-content { gap: 12px; margin-top: 18px; }
   .calendar-header, .mansion-row { grid-template-columns: clamp(80px, 24vw, 96px) repeat(13, minmax(0, 1fr)) 20px; }
   .mansion-name-cell { gap: 3px; padding: 5px 4px; }
   .mansion-index { font-size: 10px; }

@@ -397,6 +397,10 @@ const COPY = {
     english: "English",
     arabic: "العربية",
     today: "Today",
+    about: "About",
+    openAbout: "Open app description",
+    closeAbout: "Close app description",
+    aboutLabel: "About this calendar",
     openSettings: "Open regional cycle settings",
     closeSettings: "Close settings",
     settingsLabel: "Regional cycle settings",
@@ -464,6 +468,10 @@ const COPY = {
     english: "English",
     arabic: "العربية",
     today: "اليوم",
+    about: "حول",
+    openAbout: "فتح وصف التطبيق",
+    closeAbout: "إغلاق وصف التطبيق",
+    aboutLabel: "عن هذا التقويم",
     openSettings: "فتح إعدادات الدورة الإقليمية",
     closeSettings: "إغلاق الإعدادات",
     settingsLabel: "إعدادات الدورة الإقليمية",
@@ -523,6 +531,27 @@ const COPY = {
     dawnReference: "مرجع محاذاة الفجر",
     schematicMap: "النجوم المرتبطة · رسم توضيحي",
     visibilityNote: "النجم أو المجموعة المدرجة هي علامة السماء التقليدية لهذه الفترة ذات 13 يومًا. الرؤية عند الفجر تقريبية؛ إذ تؤثر السحب والتضاريس والشفق والإحداثيات الدقيقة في الرصد.",
+  },
+} as const;
+
+const ABOUT_COPY = {
+  en: {
+    title: "Regional Lunar Mansion Calendar",
+    paragraphs: [
+      "This bilingual interactive calendar presents the 28 traditional lunar mansions as a continuous 365-day regional seasonal cycle. Twenty-seven periods contain 13 days, while Al‑Jabha contains 14 days.",
+      "The Gregorian monthly table shows every date with its related star group and regional mansion name. Cycle alignment follows the selected location and regional dawn reference, covering the Arabian Gulf, Sudan, and three Australian climate regions. Each period includes a simple star map and a regional seasonal outlook.",
+      "The calendar works in Arabic and English, adapts to mobile screens, and remains available offline after the first online visit.",
+      "This is a traditional regional seasonal calendar—not a live weather forecast or a calculation of the Moon’s current astronomical position.",
+    ],
+  },
+  ar: {
+    title: "تقويم العِنات الإقليمي",
+    paragraphs: [
+      "تقويم تفاعلي ثنائي اللغة يعرض المنازل القمرية التقليدية الثمانية والعشرين ضمن دورة موسمية إقليمية متصلة مدتها 365 يومًا. تمتد سبعة وعشرون منزلة لمدة 13 يومًا، بينما تمتد منزلة الجبهة وحدها لمدة 14 يومًا.",
+      "يعرض جدول الشهر الميلادي كل تاريخ مع مجموعة النجوم المرتبطة به واسم المنزلة المستخدم في المنطقة المختارة. وتتبع محاذاة الدورة الموقع ومرجع ظهور النجوم عند الفجر، وتشمل الخليج العربي والسودان وثلاثة أقاليم مناخية في أستراليا. كما تتضمن كل فترة خريطة نجوم مبسطة ودلالة موسمية إقليمية.",
+      "يعمل التقويم باللغتين العربية والإنجليزية، ويتكيف مع شاشات الهواتف، ويمكن استخدامه دون اتصال بعد فتحه أول مرة عبر الإنترنت.",
+      "هذا تقويم موسمي إقليمي تقليدي، وليس توقعًا مباشرًا للطقس أو حسابًا للموقع الفلكي الآني للقمر.",
+    ],
   },
 } as const;
 
@@ -693,6 +722,7 @@ export default function Home() {
   const [viewYear, setViewYear] = useState(INITIAL_TODAY.getUTCFullYear());
   const [viewMonth, setViewMonth] = useState(INITIAL_TODAY.getUTCMonth());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [offlineReady, setOfflineReady] = useState(false);
 
@@ -740,6 +770,17 @@ export default function Home() {
     document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
     document.title = COPY[language].appTitle;
   }, [language]);
+
+  useEffect(() => {
+    if (!aboutOpen) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setAboutOpen(false);
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [aboutOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -976,8 +1017,21 @@ export default function Home() {
               عربي
             </button>
           </div>
-          <button className="location-pill" type="button" onClick={() => setSettingsOpen(true)}>
+          <button className="location-pill" type="button" onClick={() => { setAboutOpen(false); setSettingsOpen(true); }}>
             <span aria-hidden="true">⌖</span>{profileLabel(profile, language, true)}
+          </button>
+          <button
+            className={`about-button ${aboutOpen ? "active" : ""}`}
+            type="button"
+            aria-label={copy.openAbout}
+            aria-expanded={aboutOpen}
+            aria-controls="about-dialog"
+            onClick={() => {
+              setSettingsOpen(false);
+              setAboutOpen((open) => !open);
+            }}
+          >
+            <span aria-hidden="true">ⓘ</span>{copy.about}
           </button>
           <button className="today-button" type="button" onClick={goToToday}>{copy.today}</button>
           <button
@@ -985,7 +1039,10 @@ export default function Home() {
             type="button"
             aria-label={copy.openSettings}
             aria-expanded={settingsOpen}
-            onClick={() => setSettingsOpen((open) => !open)}
+            onClick={() => {
+              setAboutOpen(false);
+              setSettingsOpen((open) => !open);
+            }}
           >
             <span aria-hidden="true">⚙</span>
           </button>
@@ -1052,6 +1109,39 @@ export default function Home() {
           </section>
         )}
       </header>
+
+      {aboutOpen && (
+        <div className="about-layer">
+          <button
+            className="about-backdrop"
+            type="button"
+            aria-label={copy.closeAbout}
+            onClick={() => setAboutOpen(false)}
+          />
+          <section
+            className="about-dialog"
+            id="about-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="about-dialog-title"
+          >
+            <div className="about-heading">
+              <div>
+                <p className="eyebrow">{copy.aboutLabel}</p>
+                <h2 id="about-dialog-title">{ABOUT_COPY[language].title}</h2>
+              </div>
+              <button type="button" onClick={() => setAboutOpen(false)} aria-label={copy.closeAbout}>×</button>
+            </div>
+            <div className="about-content">
+              {ABOUT_COPY[language].paragraphs.map((paragraph, index) => (
+                <p className={index === ABOUT_COPY[language].paragraphs.length - 1 ? "about-note" : ""} key={paragraph}>
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          </section>
+        </div>
+      )}
 
       <section className="workspace">
         <section className="calendar-card" aria-label={copy.calendarLabel}>
